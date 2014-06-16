@@ -1,0 +1,36 @@
+#!/bin/sh
+
+filesys=x$1
+
+echo "Setting up toaster binaries and configuration files .."
+
+if [ $# != 1 ]
+then
+    echo "Toaster filesystem not mounted ..";
+    echo "use `basename $0` usb/mmc";
+    exit
+fi
+
+if [ "$filesys" = "xusb" ]
+then
+    echo "Mounting Toaster filesystem from usb disk ..";
+    mdev -s;
+    mount -t ext3 /dev/sda1 /system
+    mount -t ext3 /dev/sda2 /data;
+    mount -o bind /system/etc /etc;
+    mkdir /lib;
+    mount -o bind /system/lib /lib;
+    chmod 2777 /system/usr/* -R;
+elif [ "$filesys" = "xmmc" ]
+then
+    echo "Mounting Toaster filesystem from mmc ..";
+   mdev -s;
+   mount -t ext3 /dev/mmcblk1p1 /system
+   mount -t ext3 /dev/mmcblk1p2 /data;
+   mount -o bind /system/etc /etc;
+   mkdir /lib;
+   mount -o bind /system/lib /lib;
+   chmod 2777 /system/usr/* -R;
+fi
+
+echo "Done..";

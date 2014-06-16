@@ -1,0 +1,78 @@
+/data/ssp/buildroot/buildroot
+
+#####################
+# initramfs
+# Last modified: 1290554492
+
+dir /bin 755 0 0
+dir /sbin 755 0 0
+
+file /init initramfs/init_kexec 755 0 0
+file /bin/busybox initramfs/bin/busybox 777 0 0
+slink bin/ash busybox 777 0 0
+slink bin/basename busybox 777 0 0
+slink bin/cat busybox 777 0 0
+slink bin/chgrp busybox 777 0 0
+slink bin/chmod busybox 777 0 0
+slink bin/chown busybox 777 0 0
+slink bin/cksum busybox 777 0 0
+slink bin/cp busybox 777 0 0
+slink bin/cut busybox 777 0 0
+slink bin/date busybox 777 0 0
+slink bin/dd busybox 777 0 0
+slink bin/df busybox 777 0 0
+slink bin/dirname busybox 777 0 0
+slink bin/dmesg busybox 777 0 0
+slink bin/du busybox 777 0 0
+slink bin/echo busybox 777 0 0
+slink bin/env busybox 777 0 0
+slink bin/false busybox 777 0 0
+slink bin/hostid busybox 777 0 0
+slink bin/id busybox 777 0 0
+slink bin/kill busybox 777 0 0
+slink bin/killall busybox 777 0 0
+slink bin/killall5 busybox 777 0 0
+slink bin/length busybox 777 0 0
+slink bin/ln busybox 777 0 0
+slink bin/ls busybox 777 0 0
+slink bin/mkdir busybox 777 0 0
+slink bin/mkfifo busybox 777 0 0
+slink bin/mknod busybox 777 0 0
+slink bin/mount busybox 777 0 0
+slink bin/mv busybox 777 0 0
+slink bin/nice busybox 777 0 0
+slink bin/od busybox 777 0 0
+slink bin/printenv busybox 777 0 0
+slink bin/printf busybox 777 0 0
+slink bin/ps busybox 777 0 0
+slink bin/pwd busybox 777 0 0
+slink bin/renice busybox 777 0 0
+slink bin/rm busybox 777 0 0
+slink bin/rmdir busybox 777 0 0
+slink bin/seq busybox 777 0 0
+slink bin/sh busybox 777 0 0
+slink bin/sleep busybox 777 0 0
+slink bin/sync busybox 777 0 0
+slink bin/tail busybox 777 0 0
+slink bin/top busybox 777 0 0
+slink bin/touch busybox 777 0 0
+slink bin/true busybox 777 0 0
+slink bin/umount busybox 777 0 0
+slink bin/uname busybox 777 0 0
+slink bin/usleep busybox 777 0 0
+slink bin/wc busybox 777 0 0
+slink bin/yes busybox 777 0 0
+slink linuxrc busybox 777 0 0
+slink sbin/chroot busybox 777 0 0
+slink sbin/halt busybox 777 0 0
+slink sbin/init busybox 777 0 0
+slink sbin/insmod busybox 777 0 0
+slink sbin/klogd busybox 777 0 0
+slink sbin/lsmod busybox 777 0 0
+slink sbin/modprobe busybox 777 0 0
+slink sbin/poweroff busybox 777 0 0
+slink sbin/reboot busybox 777 0 0
+slink sbin/rmmod busybox 777 0 0
+slink sbin/sysctl busybox 777 0 0
+slink sbin/syslogd busybox 777 0 0
+

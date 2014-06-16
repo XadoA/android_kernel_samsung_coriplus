@@ -1,0 +1,80 @@
+#!/bin/sh
+
+#Mount things needed by this script
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+
+#set the date
+date 111801002009
+sleep 5
+
+#Disable kernel messages from popping onto the screen
+#echo 0 > /proc/sys/kernel/printk
+
+# make the device nodes
+mdev -s
+
+#update the file permissions after the auto mount
+chmod 666 /dev/null
+chmod 666 /dev/zero
+chmod 666 /dev/full
+chmod 666 /dev/ptmx
+chmod 666 /dev/tty
+chmod 666 /dev/random
+chmod 666 /dev/urandom
+chmod 666 /dev/ashmem
+chmod 666 /dev/binder
+
+chmod 660 /dev/android_adb
+chmod 660 /dev/android_adb_enable
+chmod 660 /dev/alarm
+chmod 660 /dev/tty0
+chmod 660 /dev/graphics
+chmod 660 /dev/input
+
+#make the temp dir
+rm -rf /tmp/*
+
+#update the binder permissions
+chmod -R a+rw /dev/binder
+
+#Welcome message
+echo "Willkommen nach Android!"
+
+# mount the sdcard
+mkdir /mnt
+mkdir /mnt/sdcard
+
+umask 0000
+
+# bind the system, data + sdcard dirs
+mkdir /data
+mkdir /system
+mkdir /sdcard
+chmod -R a+rw /data
+
+
+chmod 0777 /dev/graphics/fb0
+chmod 0777 /dev/fb0
+chmod 0777 /dev/input -R
+chmod 0777 /proc/bcm2835_mdec
+
+mkdir /tmp
+mount -t tmpfs tmpfs /tmp
+mkdir /tmp/log
+ln -s /tmp/log /dev/log
+
+ln -s /dev/log_main /dev/log/main
+ln -s /dev/log_events /dev/log/events
+ln -s /dev/log_radio /dev/log/radio 
+
+#patch up the keymaps for user reading
+
+#disable kernel timeouts
+echo 0 > /proc/sys/kernel/hung_task_timeout_secs
+
+#nano
+export TERMINFO=/etc/terminfo
+export TERM=linux
+
+exec /bin/busybox sh     

@@ -1,0 +1,39 @@
+#!/bin/sh
+
+filesys=x$1
+
+echo "Setting up eclair binaries and configuration files .."
+
+if [ $# != 1 ]
+then
+    echo "No Eclair filesystem mounted ..";
+    echo "use `basename $0` usb/mmc";
+    exit
+fi
+
+if [ "$filesys" = "xusb" ]
+then
+    echo "Mounting Eclair filesystem from usb disk ..";
+    mdev -s;
+    mount -t ext3 /dev/sda1 /system
+    mount -t ext3 /dev/sda2 /data;
+    mount -o bind /system/etc /etc;
+    mkdir /lib;
+    mount -o bind /system/lib /lib;
+    chmod 2777 /system/usr/* -R;
+    echo "Done";
+elif [ "$filesys" = "xmmc" ]
+then
+    echo "Mounting Eclair filesystem from mmc ..";
+   mdev -s;
+   mount -t ext3 /dev/mmcblk1p1 /system
+   mount -t ext3 /dev/mmcblk1p2 /data;
+   mount -o bind /system/etc /etc;
+   mkdir /lib;
+   mount -o bind /system/lib /lib;
+   chmod 2777 /system/usr/* -R;
+   echo "Done";
+fi
+
+cp /eclair-init.rc /init.rc
+echo "Run /eclair-init to start eclair .."

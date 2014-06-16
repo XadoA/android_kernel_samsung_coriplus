@@ -1,0 +1,24 @@
+# for vchiq
+/dev/vchiq                0666   system     system
+
+# for vcsm
+/dev/vcsm                 0666   system     system
+
+# for display info
+/dev/vc-dnfo              0666   system     system
+
+# for videocore mem
+/dev/vc-mem               0666   system     system
+
+# for HDMI
+/dev/vc-hnfo              0666   system     system
+
+# for overlay
+/dev/vc-ovl               0666   system     system
+
+# for omx
+/dev/vc-omx               0666   system     system
+
+# for virtual sensors
+/dev/brvsens              0666   system     system
+

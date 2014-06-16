@@ -1,0 +1,21 @@
+#!/bin/sh
+
+echo "Hotplug/unplug 32M bytes from the Linux managed memory"
+
+test=$(cat /sys/devices/system/memory/memory11/state | grep online)
+if [ "$test" = "online" ]
+then
+	echo "Now start unplugging 32M bytes out of Linux memory"
+
+	echo offline > /sys/devices/system/memory/memory11/state
+        echo offline > /sys/devices/system/memory/memory10/state
+        echo offline > /sys/devices/system/memory/memory9/state
+        echo offline > /sys/devices/system/memory/memory8/state
+else
+        echo "Now start plugging 32M bytes into Linux memory"
+        echo online > /sys/devices/system/memory/memory11/state
+        echo online > /sys/devices/system/memory/memory10/state
+        echo online > /sys/devices/system/memory/memory9/state
+        echo online > /sys/devices/system/memory/memory8/state
+fi
+echo "Done."

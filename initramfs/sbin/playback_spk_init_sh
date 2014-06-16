@@ -1,0 +1,78 @@
+bsc_rw rw 1 0x1a 0
+bsc_rw ww 1 0x1a 0 0
+# // Disable REG_SYNC, i.e. Register Writes are not Sync'd with SYSCLK
+bsc_rw ww 1 0x1a 0x101 0x4
+# // Turn on VMID using anti-pop features
+bsc_rw ww 1 0x1a 0x39 0x6c
+# // Turn on VMID using anti-pop features
+bsc_rw ww 1 0x1a 0x1 0x3
+usleep 15000
+
+# set AIF1
+# set master mode
+bsc_rw ww 1 0x1a 0x302 0x4000
+# // Left (mono microphone) ADC output on both channels, no tdm, 16-bit, dsp mode b
+bsc_rw ww 1 0x1a 0x300 0x98
+# // bclk1 = aif1clk / 4 (for 44.1k / 48k)
+bsc_rw ww 1 0x1a 0x303 0x40
+# // aif1clk enabled, fll1 source
+bsc_rw ww 1 0x1a 0x200 0x11
+#  // Enable the DSP Mixer Core Clock and DSP Processing Clock for AIF1
+bsc_rw ww 1 0x1a 0x208 0xa
+
+# set Playback
+# Configure the AIF1DAC1L/R path to DAC1L/R
+bsc_rw ww 1 0x1a 0x601 0x1
+bsc_rw ww 1 0x1a 0x602 0x1
+# Disable the DAC Mute in the DAC Digital Volume - DAC1
+bsc_rw ww 1 0x1a 0x610 0x1c0
+bsc_rw ww 1 0x1a 0x611 0x1c0
+# Enable the DAC128OSR for High DAC SNR performance
+bsc_rw ww 1 0x1a 0x620 0x1
+# Enable DAC1L/R
+bsc_rw ww 1 0x1a 0x5 0x303
+usleep 4500
+
+# Enable Speakers
+bsc_rw ww 1 0x1a 0x1 0x3003
+# Disable the AIF1DAC1 Interface Mute
+bsc_rw ww 1 0x1a 0x420 0
+#/ GPIO1 defaults to ADCLRCLK1, which causes LRCLK1 to only output on DAC input, and not
+# on ADC output. Setting GPIO1 to any other mode causes LRCLK1 to output in both modes,
+# as required, so we set GPIO1 to be a GPIO, with other settings left as the default
+# (input with de-bounce).
+bsc_rw ww 1 0x1a 0x700 0x8101
+# Unmute left speaker mixer vol
+bsc_rw ww 1 0x1a 0x22 0
+# Unmute right speaker mixer vol
+bsc_rw ww 1 0x1a 0x23 0
+# Unmute DAC1L/R to SPKMIXL/R
+bsc_rw ww 1 0x1a 0x36 0x3
+# Unmute SPKMIXL_TO_SPKOUTL and SPKMIXR_TO_SPKOUTL
+bsc_rw ww 1 0x1a 0x24 0x18
+# Set SPKOUTL_BOOST to max value
+#bsc_rw ww 1 0x1a 0x25 0x3f
+# Setup bit per sample (reg 0x300 = 0x98)
+#  FLL (reg 0x220) is enabled when setup ate
+#  Disable clock from FLL1 to AIF1
+bsc_rw ww 1 0x1a 0x200 0x0
+#  fracn_ena, FLL1_disa
+bsc_rw ww 1 0x1a 0x220 0x4
+# pre-divider = 1,  FLL1 source: MCLK1
+bsc_rw ww 1 0x1a 0x224 0x0
+# N=187(0bbh)
+bsc_rw ww 1 0x1a 0x223 0x1760
+# K=0.5(8000h)
+bsc_rw ww 1 0x1a 0x222 0x8000 
+# FLL1_OUTDIV: 8, FLL1_FRATIO: 8
+bsc_rw ww 1 0x1a 0x221 0x704
+#  fracn_ena, FLL1_ENA
+bsc_rw ww 1 0x1a 0x220 0x5
+usleep 3000
+
+#BCLK = AIF1CLK / 8 = 1536K
+bsc_rw ww 1 0x1a 0x303 0x40
+#48K sample rate, AIF1CLK / fs ratio 256
+bsc_rw ww 1 0x1a 0x210 0x83
+# Enable clock from FLL1 to AIF1
+bsc_rw ww 1 0x1a 0x200 0x11

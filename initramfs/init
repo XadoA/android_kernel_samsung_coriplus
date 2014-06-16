@@ -1,0 +1,128 @@
+#!/bin/sh
+
+#Mount things needed by this script
+mkdir /proc
+mkdir /sys
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devpts devpts /dev/pts
+
+#set the date
+date 111801002009
+
+#Disable kernel messages from popping onto the screen
+#echo 0 > /proc/sys/kernel/printk
+
+# make the device nodes
+mdev -s
+
+#update the file permissions after the auto mount
+chmod 666 /dev/null
+chmod 666 /dev/zero
+chmod 666 /dev/full
+chmod 666 /dev/ptmx
+chmod 666 /dev/tty
+chmod 666 /dev/random
+chmod 666 /dev/urandom
+chmod 666 /dev/ashmem
+chmod 666 /dev/binder
+
+chmod 660 /dev/android_adb
+chmod 660 /dev/android_adb_enable
+chmod 660 /dev/alarm
+chmod 660 /dev/tty0
+chmod 660 /dev/input
+
+#make the temp dir
+rm -rf /tmp/*
+
+#update the binder permissions
+chmod -R a+rw /dev/binder
+
+#Welcome message
+echo "Willkommen nach Android!"
+
+# mount the sdcard
+mkdir /mnt
+mkdir /mnt/sdcard
+
+umask 0000
+
+# bind the system, data + sdcard dirs
+mkdir /data
+mkdir /system
+mkdir /sdcard
+mkdir /cache
+chmod -R a+rw /data
+
+mkdir /dev/graphics
+chmod 660 /dev/graphics
+ln -s /dev/fb0 /dev/graphics/fb0
+chmod 0777 /dev/fb0
+chmod 0777 /dev/input -R
+if [ -d /proc/bcm2835_mdec ]; then chmod 0777 /proc/bcm2835_mdec ; fi
+
+mount -t tmpfs tmpfs /tmp
+mkdir /tmp/log
+ln -s /tmp/log /dev/log
+
+ln -s /dev/log_main /dev/log/main
+ln -s /dev/log_events /dev/log/events
+ln -s /dev/log_radio /dev/log/radio 
+
+#required for android/vold
+mkdir /dev/block
+
+mkdir /dev/snd
+chmod 0777 /dev/snd
+mknod /dev/snd/pcmC0D0c c 116 24
+mknod /dev/snd/pcmC0D1c c 116 25
+mknod /dev/snd/pcmC0D2c c 116 26
+mknod /dev/snd/pcmC0D0p c 116 16
+mknod /dev/snd/pcmC0D1p c 116 17
+mknod /dev/snd/pcmC0D2p c 116 18
+mknod /dev/snd/hwC0D0 c 116 4
+mknod /dev/snd/midiC0D0 c 116 8
+mknod /dev/snd/controlC0 c 116 0
+mknod /dev/snd/pcmC1D0c c 116 56
+mknod /dev/snd/pcmC1D1c c 116 57
+mknod /dev/snd/pcmC1D2c c 116 58
+mknod /dev/snd/pcmC1D0p  c 116 48
+mknod /dev/snd/pcmC1D1p c 116 49
+mknod /dev/snd/pcmC1D2p c 116 50
+mknod /dev/snd/hwC1D0 c 116 36
+mknod /dev/snd/midiC1D0 c 116 40
+mknod /dev/snd/controlC1 c 116 32
+mknod /dev/snd/seq c 116 1
+mknod /dev/snd/timer c 116 33
+
+
+#patch up the keymaps for user reading
+
+#disable kernel timeouts
+echo 0 > /proc/sys/kernel/hung_task_timeout_secs
+
+#auto reboot the kernel on a panic
+echo 4 > /proc/sys/kernel/panic
+
+#nano
+export TERMINFO=/etc/terminfo
+export TERM=linux
+export LD_LIBRARY_PATH=/lib:/usr/lib
+
+mount -t debugfs none /sys/kernel/debug/
+
+#Turn off both of Red and Green LEDs
+echo 0 > /sys/devices/platform/leds-gpio/leds/green-led/brightness
+echo 0 > /sys/devices/platform/leds-gpio/leds/red-led/brightness
+
+#Increase ARM freq...default - 500MHz
+#echo inrease voltage to 1.3v
+#cat /sys/class/regulator/regulator.1/microvolts
+#echo 1380000 > /sys/class/regulator/regulator.1/reg-virt-consumer.1-arm_core/max_microvolts
+#echo 1300000 > /sys/class/regulator/regulator.1/reg-virt-consumer.1-arm_core/min_microvolts
+cat /sys/class/regulator/regulator.1/microvolts
+#echo boost ARM clock to 1Ghz
+#echo 1000000000 > /sys/kernel/debug/clock/arm_clk/rate
+
+exec /android_setup.sh     

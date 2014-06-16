@@ -1,0 +1,540 @@
+/data/ssp/buildroot/buildroot
+
+#####################
+# initramfs
+# Last modified: 1290554492
+
+dir /bin 755 0 0
+slink /bin/uudecode busybox 777 0 0
+slink /bin/fsck busybox 777 0 0
+slink /bin/touch busybox 777 0 0
+slink /bin/who busybox 777 0 0
+slink /bin/tftp busybox 777 0 0
+slink /bin/tftpd busybox 777 0 0
+slink /bin/udpsvd busybox 777 0 0
+slink /bin/ftpd busybox 777 0 0
+slink /bin/chrt busybox 777 0 0
+slink /bin/losetup busybox 777 0 0
+slink /bin/kbd_mode busybox 777 0 0
+slink /bin/setkeycodes busybox 777 0 0
+slink /bin/mount busybox 777 0 0
+slink /bin/false busybox 777 0 0
+slink /bin/ps busybox 777 0 0
+slink /bin/reboot busybox 777 0 0
+slink /bin/mkfifo busybox 777 0 0
+slink /bin/cmp busybox 777 0 0
+slink /bin/bunzip2 busybox 777 0 0
+slink /bin/ipcrm busybox 777 0 0
+slink /bin/arping busybox 777 0 0
+slink /bin/patch busybox 777 0 0
+slink /bin/pwd busybox 777 0 0
+slink /bin/tar busybox 777 0 0
+slink /bin/du busybox 777 0 0
+slink /bin/printf busybox 777 0 0
+slink /bin/sha1sum busybox 777 0 0
+slink /bin/renice busybox 777 0 0
+slink /bin/nice busybox 777 0 0
+slink /bin/free busybox 777 0 0
+slink /bin/nc busybox 777 0 0
+slink /bin/true busybox 777 0 0
+slink /bin/vlock busybox 777 0 0
+slink /bin/httpd busybox 777 0 0
+slink /bin/setconsole busybox 777 0 0
+slink /bin/sulogin busybox 777 0 0
+slink /bin/mdev busybox 777 0 0
+slink /bin/setarch busybox 777 0 0
+slink /bin/ar busybox 777 0 0
+slink /bin/deluser busybox 777 0 0
+slink /bin/switch_root busybox 777 0 0
+slink /bin/cal busybox 777 0 0
+slink /bin/mkdir busybox 777 0 0
+slink /bin/mountpoint busybox 777 0 0
+file /bin/strace initramfs/bin/strace 755 0 0
+slink /bin/clear busybox 777 0 0
+slink /bin/delgroup busybox 777 0 0
+slink /bin/pipe_progress busybox 777 0 0
+slink /bin/wget busybox 777 0 0
+slink /bin/cp busybox 777 0 0
+slink /bin/uptime busybox 777 0 0
+slink /bin/nohup busybox 777 0 0
+slink /bin/iproute busybox 777 0 0
+slink /bin/lsmod busybox 777 0 0
+slink /bin/chown busybox 777 0 0
+slink /bin/tty busybox 777 0 0
+slink /bin/rpm2cpio busybox 777 0 0
+slink /bin/install busybox 777 0 0
+slink /bin/devmem busybox 777 0 0
+slink /bin/eject busybox 777 0 0
+slink /bin/tee busybox 777 0 0
+slink /bin/xargs busybox 777 0 0
+file /bin/setup_eclair initramfs/bin/setup_eclair 755 0 0
+slink /bin/mesg busybox 777 0 0
+slink /bin/chgrp busybox 777 0 0
+slink /bin/insmod busybox 777 0 0
+slink /bin/last busybox 777 0 0
+slink /bin/md5sum busybox 777 0 0
+slink /bin/chroot busybox 777 0 0
+slink /bin/which busybox 777 0 0
+slink /bin/mv busybox 777 0 0
+slink /bin/strings busybox 777 0 0
+slink /bin/fbset busybox 777 0 0
+slink /bin/fdformat busybox 777 0 0
+slink /bin/addgroup busybox 777 0 0
+slink /bin/taskset busybox 777 0 0
+slink /bin/udpsvd busybox 777 0 0
+slink /bin/tr busybox 777 0 0
+slink /bin/sleep busybox 777 0 0
+slink /bin/run-parts busybox 777 0 0
+slink /bin/swapon busybox 777 0 0
+slink /bin/getopt busybox 777 0 0
+slink /bin/getopts busybox 777 0 0
+slink /bin/iplink busybox 777 0 0
+slink /bin/ipcs busybox 777 0 0
+slink /bin/dumpkmap busybox 777 0 0
+slink /bin/swapoff busybox 777 0 0
+slink /bin/grep busybox 777 0 0
+slink /bin/hdparm busybox 777 0 0
+slink /bin/basename busybox 777 0 0
+slink /bin/sv busybox 777 0 0
+slink /bin/stty busybox 777 0 0
+slink /bin/less busybox 777 0 0
+slink /bin/dos2unix busybox 777 0 0
+slink /bin/dd busybox 777 0 0
+slink /bin/awk busybox 777 0 0
+slink /bin/adjtimex busybox 777 0 0
+slink /bin/vconfig busybox 777 0 0
+slink /bin/syslogd busybox 777 0 0
+slink /bin/od busybox 777 0 0
+slink /bin/diff busybox 777 0 0
+slink /bin/su busybox 777 0 0
+slink /bin/ipcalc busybox 777 0 0
+slink /bin/id busybox 777 0 0
+slink /bin/df busybox 777 0 0
+slink /bin/ping busybox 777 0 0
+slink /bin/unzip busybox 777 0 0
+slink /bin/ls busybox 777 0 0
+slink /bin/deallocvt busybox 777 0 0
+slink /bin/fold busybox 777 0 0
+slink /bin/pkill busybox 777 0 0
+file /bin/setup_toaster initramfs/bin/setup_toaster 755 0 0
+slink /bin/expand busybox 777 0 0
+slink /bin/logread busybox 777 0 0
+slink /bin/chvt busybox 777 0 0
+slink /bin/resize busybox 777 0 0
+slink /bin/watch busybox 777 0 0
+slink /bin/start-stop-daemon busybox 777 0 0
+slink /bin/dnsd busybox 777 0 0
+slink /bin/logname busybox 777 0 0
+slink /bin/[ busybox 777 0 0
+slink /bin/usleep busybox 777 0 0
+slink /bin/readlink busybox 777 0 0
+slink /bin/hwclock busybox 777 0 0
+slink /bin/cat busybox 777 0 0
+slink /bin/lsattr busybox 777 0 0
+slink /bin/hostname busybox 777 0 0
+slink /bin/printenv busybox 777 0 0
+slink /bin/stat busybox 777 0 0
+slink /bin/ifconfig busybox 777 0 0
+slink /bin/linuxrc busybox 777 0 0
+slink /bin/crond busybox 777 0 0
+slink /bin/halt busybox 777 0 0
+slink /bin/envdir busybox 777 0 0
+slink /bin/umount busybox 777 0 0
+slink /bin/dmesg busybox 777 0 0
+slink /bin/fuser busybox 777 0 0
+slink /bin/sum busybox 777 0 0
+slink /bin/gunzip busybox 777 0 0
+slink /bin/vi busybox 777 0 0
+slink /bin/init busybox 777 0 0
+slink /bin/kill busybox 777 0 0
+slink /bin/sysctl busybox 777 0 0
+slink /bin/expr busybox 777 0 0
+file /bin/setup_froyo initramfs/bin/setup_froyo 755 0 0
+slink /bin/sort busybox 777 0 0
+slink /bin/env busybox 777 0 0
+slink /bin/bzip2 busybox 777 0 0
+slink /bin/ed busybox 777 0 0
+slink /bin/route busybox 777 0 0
+slink /bin/iptunnel busybox 777 0 0
+slink /bin/lzmacat busybox 777 0 0
+slink /bin/yes busybox 777 0 0
+file /bin/hotplug_removal_32M initramfs/bin/hotplug_removal_32M 755 0 0
+slink /bin/klogd busybox 777 0 0
+slink /bin/seq busybox 777 0 0
+slink /bin/logger busybox 777 0 0
+slink /bin/pscan busybox 777 0 0
+slink /bin/ftpget busybox 777 0 0
+slink /bin/unexpand busybox 777 0 0
+slink /bin/catv busybox 777 0 0
+slink /bin/linux32 busybox 777 0 0
+slink /bin/runlevel busybox 777 0 0
+slink /bin/freeramdisk busybox 777 0 0
+slink /bin/dirname busybox 777 0 0
+slink /bin/slattach busybox 777 0 0
+slink /bin/find busybox 777 0 0
+slink /bin/watchdog busybox 777 0 0
+slink /bin/sync busybox 777 0 0
+slink /bin/pivot_root busybox 777 0 0
+slink /bin/more busybox 777 0 0
+slink /bin/tcpsvd busybox 777 0 0
+slink /bin/ping6 busybox 777 0 0
+slink /bin/ln busybox 777 0 0
+slink /bin/chattr busybox 777 0 0
+slink /bin/tail busybox 777 0 0
+slink /bin/setuidgid busybox 777 0 0
+slink /bin/udhcpc busybox 777 0 0
+slink /bin/dumpleases busybox 777 0 0
+slink /bin/nmeter busybox 777 0 0
+slink /bin/rdate busybox 777 0 0
+slink /bin/softlimit busybox 777 0 0
+slink /bin/arp busybox 777 0 0
+slink /bin/fgrep busybox 777 0 0
+slink /bin/crontab busybox 777 0 0
+slink /bin/makedevs busybox 777 0 0
+slink /bin/dc busybox 777 0 0
+slink /bin/date busybox 777 0 0
+slink /bin/realpath busybox 777 0 0
+slink /bin/telnetd busybox 777 0 0
+slink /bin/unix2dos busybox 777 0 0
+slink /bin/ether-wake busybox 777 0 0
+slink /bin/egrep busybox 777 0 0
+slink /bin/poweroff busybox 777 0 0
+slink /bin/login busybox 777 0 0
+slink /bin/cut busybox 777 0 0
+slink /bin/ftpput busybox 777 0 0
+slink /bin/hexdump busybox 777 0 0
+slink /bin/reset busybox 777 0 0
+slink /bin/readprofile busybox 777 0 0
+slink /bin/hostid busybox 777 0 0
+slink /bin/uncompress busybox 777 0 0
+slink /bin/fsck.minix busybox 777 0 0
+slink /bin/runsvdir busybox 777 0 0
+slink /bin/openvt busybox 777 0 0
+slink /bin/killall5 busybox 777 0 0
+slink /bin/rx busybox 777 0 0
+slink /bin/comm busybox 777 0 0
+slink /bin/uuencode busybox 777 0 0
+slink /bin/netstat busybox 777 0 0
+slink /bin/unlzma busybox 777 0 0
+slink /bin/setsid busybox 777 0 0
+slink /bin/fakeidentd busybox 777 0 0
+slink /bin/chpst busybox 777 0 0
+slink /bin/zcat busybox 777 0 0
+slink /bin/mktemp busybox 777 0 0
+slink /bin/fdflush busybox 777 0 0
+slink /bin/cryptpw busybox 777 0 0
+slink /bin/split busybox 777 0 0
+slink /bin/whoami busybox 777 0 0
+slink /bin/echo busybox 777 0 0
+slink /bin/ash busybox 777 0 0
+slink /bin/traceroute busybox 777 0 0
+slink /bin/svlogd busybox 777 0 0
+slink /bin/[[ busybox 777 0 0
+slink /bin/wc busybox 777 0 0
+slink /bin/ipaddr busybox 777 0 0
+slink /bin/udhcpd busybox 777 0 0
+slink /bin/top busybox 777 0 0
+slink /bin/mt busybox 777 0 0
+slink /bin/ifup busybox 777 0 0
+slink /bin/iprule busybox 777 0 0
+slink /bin/microcom busybox 777 0 0
+slink /bin/sed busybox 777 0 0
+slink /bin/envuidgid busybox 777 0 0
+slink /bin/rmmod busybox 777 0 0
+slink /bin/rm busybox 777 0 0
+slink /bin/passwd busybox 777 0 0
+slink /bin/chmod busybox 777 0 0
+slink /bin/ip busybox 777 0 0
+slink /bin/linux64 busybox 777 0 0
+slink /bin/cksum busybox 777 0 0
+slink /bin/getty busybox 777 0 0
+slink /bin/rpm busybox 777 0 0
+file /bin/busybox initramfs/bin/busybox 4755 0 0
+slink /bin/mkswap busybox 777 0 0
+slink /bin/modprobe busybox 777 0 0
+slink /bin/time busybox 777 0 0
+slink /bin/pppd busybox 777 0 0
+slink /bin/pgrep busybox 777 0 0
+slink /bin/rmdir busybox 777 0 0
+slink /bin/test busybox 777 0 0
+slink /bin/nslookup busybox 777 0 0
+slink /bin/chpasswd busybox 777 0 0
+slink /bin/loadfont busybox 777 0 0
+slink /bin/length busybox 777 0 0
+slink /bin/fdisk busybox 777 0 0
+slink /bin/zcip busybox 777 0 0
+slink /bin/inetd busybox 777 0 0
+slink /bin/sh busybox 777 0 0
+slink /bin/pidof busybox 777 0 0
+slink /bin/loadkmap busybox 777 0 0
+slink /bin/raidautorun busybox 777 0 0
+slink /bin/killall busybox 777 0 0
+slink /bin/bzcat busybox 777 0 0
+slink /bin/uname busybox 777 0 0
+slink /bin/nameif busybox 777 0 0
+slink /bin/dhcprelay busybox 777 0 0
+slink /bin/adduser busybox 777 0 0
+slink /bin/cpio busybox 777 0 0
+slink /bin/ifdown busybox 777 0 0
+slink /bin/gzip busybox 777 0 0
+slink /bin/mknod busybox 777 0 0
+slink /bin/head busybox 777 0 0
+slink /bin/mkfs.minix busybox 777 0 0
+slink /bin/telnet busybox 777 0 0
+slink /bin/ttysize busybox 777 0 0
+slink /bin/uniq busybox 777 0 0
+slink /bin/runsv busybox 777 0 0
+slink /bin/setlogcons busybox 777 0 0
+file /setenv.sh initramfs/setenv.sh 755 0 0
+file /oprofile_setup.sh initramfs/oprofile_setup.sh 755 0 0
+file /default.prop initramfs/default.prop 755 0 0
+dir /lib 755 0 0
+slink /lib/libc.so.6 libc-2.9.so 777 0 0
+slink /lib/libresolv.so.2 libresolv-2.9.so 777 0 0
+slink /lib/libnss_files.so.2 libnss_files-2.9.so 777 0 0
+file /lib/libc-2.9.so initramfs/lib/libc-2.9.so 755 0 0
+file /lib/libnss_files-2.9.so initramfs/lib/libnss_files-2.9.so 755 0 0
+file /lib/libresolv-2.9.so initramfs/lib/libresolv-2.9.so 755 0 0
+slink /lib/ld-linux.so.3 ld-2.9.so 777 0 0
+file /lib/ld-2.9.so initramfs/lib/ld-2.9.so 755 0 0
+dir /etc 755 0 0
+dir /etc/network 777 0 0
+dir /etc/network/if-pre-up.d 755 0 0
+dir /etc/network/if-up.d 755 0 0
+dir /etc/network/if-post-down.d 755 0 0
+dir /etc/network/if-down.d 755 0 0
+file /etc/hosts initramfs/etc/hosts 644 0 0
+file /init initramfs/init 755 0 0
+file /ramfs_image.txt initramfs/ramfs_image.txt 644 0 0
+file /eclair-init initramfs/eclair-init 755 0 0
+file /eclair-init.rc initramfs/eclair-init.rc 755 0 0
+dir /home 777 0 0
+dir /home/default 2755 1000 1000
+file /init_script initramfs/init_script 644 0 0
+file /initlogo.rle initramfs/initlogo.rle 755 0 0
+file /loadwifi.sh initramfs/loadwifi.sh 755 0 0
+file /nfsmount.sh initramfs/nfsmount.sh 755 0 0
+dir /dev 755 0 0
+nod /dev/mtd0 640 0 0 c 90 0
+nod /dev/ttyPSC3 666 0 0 c 204 151
+nod /dev/hda5 640 0 0 b 3 5
+nod /dev/sda13 640 0 0 b 8 13
+nod /dev/hdb9 640 0 0 b 3 73
+nod /dev/null 666 0 0 c 1 3
+nod /dev/ptmx 666 0 0 c 5 2
+nod /dev/ram0 640 0 0 b 1 0
+nod /dev/fb2 640 0 5 c 29 2
+nod /dev/sdb2 640 0 0 b 8 18
+nod /dev/sdb14 640 0 0 b 8 30
+nod /dev/hda13 640 0 0 b 3 13
+nod /dev/tty3 666 0 0 c 4 3
+nod /dev/sdb8 640 0 0 b 8 24
+nod /dev/tty1 666 0 0 c 4 1
+nod /dev/mtd2 640 0 0 c 90 4
+nod /dev/tty5 666 0 0 c 4 5
+dir /dev/pts 755 0 0
+nod /dev/ttyp2 666 0 0 c 3 2
+nod /dev/ttyp8 666 0 0 c 3 8
+nod /dev/ttyP1 666 0 0 c 57 1
+nod /dev/sdb11 640 0 0 b 8 27
+nod /dev/ubb5 640 0 0 b 180 69
+nod /dev/mtdblock1 640 0 0 b 31 1
+nod /dev/ubb1 640 0 0 b 180 65
+nod /dev/mtdblock3 640 0 0 b 31 3
+nod /dev/mtd3 640 0 0 c 90 6
+nod /dev/ttyp9 666 0 0 c 3 9
+nod /dev/ttyP3 666 0 0 c 57 3
+nod /dev/sda14 640 0 0 b 8 14
+nod /dev/sdb13 640 0 0 b 8 29
+nod /dev/sda11 640 0 0 b 8 11
+nod /dev/mtd1 640 0 0 c 90 2
+nod /dev/sda 640 0 0 b 8 0
+nod /dev/ttyS1 666 0 0 c 4 65
+nod /dev/mtdblock0 640 0 0 b 31 0
+nod /dev/tty 666 0 0 c 5 0
+nod /dev/ttyPSC0 666 0 0 c 204 148
+nod /dev/hdb12 640 0 0 b 3 76
+nod /dev/ttyUL2 666 0 0 c 204 189
+nod /dev/hdb10 640 0 0 b 3 74
+nod /dev/mem 640 0 0 c 1 1
+nod /dev/tty6 666 0 0 c 4 6
+nod /dev/ptyp1 666 0 0 c 2 1
+nod /dev/hdb1 640 0 0 b 3 65
+nod /dev/ttyUL1 666 0 0 c 204 188
+nod /dev/sda7 640 0 0 b 8 7
+nod /dev/ttyCPM3 666 0 0 c 204 49
+nod /dev/sdb3 640 0 0 b 8 19
+nod /dev/ptyp0 666 0 0 c 2 0
+nod /dev/sdb10 640 0 0 b 8 26
+nod /dev/tty0 666 0 0 c 4 0
+nod /dev/hda7 640 0 0 b 3 7
+nod /dev/sdb12 640 0 0 b 8 28
+nod /dev/hda3 640 0 0 b 3 3
+nod /dev/ubb4 640 0 0 b 180 68
+nod /dev/rtc 640 0 0 c 10 135
+nod /dev/hdb2 640 0 0 b 3 66
+nod /dev/uba1 640 0 0 b 180 1
+nod /dev/ttySAC0 666 0 0 c 204 64
+nod /dev/fb3 640 0 5 c 29 3
+nod /dev/ptyp9 666 0 0 c 2 9
+nod /dev/ptyp2 666 0 0 c 2 2
+nod /dev/ttyp7 666 0 0 c 3 7
+nod /dev/sda3 640 0 0 b 8 3
+nod /dev/i2c-1 666 0 0 c 89 1
+nod /dev/fb0 640 0 5 c 29 0
+nod /dev/hda4 640 0 0 b 3 4
+nod /dev/hdb 640 0 0 b 3 64
+nod /dev/hda14 640 0 0 b 3 14
+nod /dev/hdb6 640 0 0 b 3 70
+nod /dev/uba2 640 0 0 b 180 2
+nod /dev/uba5 640 0 0 b 180 5
+nod /dev/ttyPSC2 666 0 0 c 204 150
+nod /dev/ptyp8 666 0 0 c 2 8
+nod /dev/hda9 640 0 0 b 3 9
+nod /dev/ubb2 640 0 0 b 180 66
+nod /dev/loop0 640 0 0 b 7 0
+nod /dev/ttymxc2 666 0 0 c 207 18
+nod /dev/ttyp3 666 0 0 c 3 3
+nod /dev/sdb6 640 0 0 b 8 22
+nod /dev/fb1 640 0 5 c 29 1
+nod /dev/ptyp3 666 0 0 c 2 3
+nod /dev/ttyPSC1 666 0 0 c 204 149
+nod /dev/tty7 666 0 0 c 4 7
+nod /dev/ptyp7 666 0 0 c 2 7
+nod /dev/sdb5 640 0 0 b 8 21
+nod /dev/hda11 640 0 0 b 3 11
+nod /dev/hdb7 640 0 0 b 3 71
+nod /dev/console 666 0 0 c 5 1
+nod /dev/sdb4 640 0 0 b 8 20
+nod /dev/sda10 640 0 0 b 8 10
+nod /dev/ttyp4 666 0 0 c 3 4
+nod /dev/sda8 640 0 0 b 8 8
+nod /dev/ttyP0 666 0 0 c 57 0
+nod /dev/uba4 640 0 0 b 180 4
+nod /dev/mtdblock2 640 0 0 b 31 2
+nod /dev/zero 666 0 0 c 1 5
+dir /dev/shm 755 0 0
+nod /dev/hdb8 640 0 0 b 3 72
+nod /dev/ram1 640 0 0 b 1 1
+nod /dev/ttyP2 666 0 0 c 57 2
+nod /dev/urandom 666 0 0 c 1 9
+nod /dev/ubb3 640 0 0 b 180 67
+nod /dev/ttyS3 666 0 0 c 4 67
+nod /dev/hda12 640 0 0 b 3 12
+nod /dev/hda 640 0 0 b 3 0
+nod /dev/ttymxc0 666 0 0 c 207 16
+nod /dev/ttyp6 666 0 0 c 3 6
+nod /dev/i2c-2 666 0 0 c 89 2
+nod /dev/sda1 640 0 0 b 8 1
+nod /dev/uba3 640 0 0 b 180 3
+nod /dev/ptyp6 666 0 0 c 2 6
+nod /dev/ram2 640 0 0 b 1 2
+nod /dev/loop1 640 0 0 b 7 1
+nod /dev/ptyp5 666 0 0 c 2 5
+nod /dev/ttyp0 666 0 0 c 3 0
+nod /dev/hda1 640 0 0 b 3 1
+nod /dev/hda10 640 0 0 b 3 10
+nod /dev/ttyCPM0 666 0 0 c 204 46
+nod /dev/ttyS0 666 0 0 c 4 64
+nod /dev/i2c-3 666 0 0 c 89 3
+nod /dev/sda6 640 0 0 b 8 6
+nod /dev/i2c-0 666 0 0 c 89 0
+nod /dev/ttySAC1 666 0 0 c 204 65
+nod /dev/ubb 640 0 0 b 180 8
+nod /dev/psaux 666 0 0 c 10 1
+nod /dev/hdb13 640 0 0 b 3 77
+nod /dev/ttyCPM2 666 0 0 c 204 48
+nod /dev/ttyp5 666 0 0 c 3 5
+nod /dev/tty2 666 0 0 c 4 2
+nod /dev/ttyUL0 666 0 0 c 204 187
+nod /dev/ttyAMA2 666 0 0 c 204 66
+nod /dev/hdb11 640 0 0 b 3 75
+nod /dev/kmem 640 0 0 c 1 2
+nod /dev/ttyp1 666 0 0 c 3 1
+nod /dev/sdb1 640 0 0 b 8 17
+nod /dev/uba 640 0 0 b 180 0
+nod /dev/ttyAMA1 666 0 0 c 204 65
+nod /dev/random 666 0 0 c 1 8
+nod /dev/tty4 666 0 0 c 4 4
+nod /dev/hdb14 640 0 0 b 3 78
+nod /dev/sda5 640 0 0 b 8 5
+nod /dev/ttyAMA3 666 0 0 c 204 67
+nod /dev/sdb9 640 0 0 b 8 25
+dir /dev/input 755 0 0
+nod /dev/input/mouse0 660 0 0 c 13 32
+nod /dev/input/event2 660 0 0 c 13 66
+nod /dev/input/mouse3 660 0 0 c 13 35
+nod /dev/input/event1 660 0 0 c 13 65
+nod /dev/input/event3 660 0 0 c 13 67
+nod /dev/input/event4 660 0 0 c 13 68
+nod /dev/input/event0 660 0 0 c 13 64
+nod /dev/input/mouse1 660 0 0 c 13 33
+nod /dev/input/mouse2 660 0 0 c 13 34
+nod /dev/input/mice 640 0 0 c 13 63
+nod /dev/sdb7 640 0 0 b 8 23
+nod /dev/hdb3 640 0 0 b 3 67
+nod /dev/sdb 640 0 0 b 8 16
+nod /dev/ttyCPM1 666 0 0 c 204 47
+nod /dev/sda2 640 0 0 b 8 2
+nod /dev/hda6 640 0 0 b 3 6
+nod /dev/hdb5 640 0 0 b 3 69
+dir /dev/net 755 0 0
+nod /dev/net/tun 660 0 0 c 10 200
+nod /dev/hda2 640 0 0 b 3 2
+nod /dev/ttybcm0 666 0 0 c 207 25
+nod /dev/ttyAMA0 666 0 0 c 204 64
+nod /dev/ram 640 0 0 b 1 1
+nod /dev/ttySAC2 666 0 0 c 204 66
+nod /dev/ttySAC3 666 0 0 c 204 67
+nod /dev/ttyUL3 666 0 0 c 204 190
+nod /dev/hdb4 640 0 0 b 3 68
+nod /dev/ttymxc1 666 0 0 c 207 17
+nod /dev/sda9 640 0 0 b 8 9
+file /dev/.devices initramfs/dev/.devices 644 0 0
+nod /dev/hda8 640 0 0 b 3 8
+nod /dev/ptyp4 666 0 0 c 2 4
+nod /dev/ram3 640 0 0 b 1 3
+nod /dev/sda4 640 0 0 b 8 4
+nod /dev/ttyS2 666 0 0 c 4 66
+nod /dev/sda12 640 0 0 b 8 12
+dir /tmp 1777 0 0
+file /froyo-init initramfs/froyo-init 755 0 0
+file /froyo-init.rc initramfs/froyo-init.rc 755 0 0
+file /gingerbread-init initramfs/gingerbread-init 755 0 0
+file /gingerbread-init.rc initramfs/gingerbread-init.rc 755 0 0
+file /ics-init initramfs/ics-init 755 0 0
+file /ics-init.rc initramfs/ics-init.rc 755 0 0
+file /ueventd.rhearay.rc initramfs/ueventd.rhearay.rc 755 0 0
+file /ueventd.rheaberri.rc initramfs/ueventd.rheaberri.rc 755 0 0
+file /ueventd.island.rc initramfs/ueventd.island.rc 755 0 0
+file /android_setup.sh initramfs/android_setup.sh 777 0 0
+file /android-update.sh initramfs/android-update.sh 777 0 0
+dir /sbin 755 0 0
+file /sbin/adbd initramfs/sbin/adbd 777 0 0
+slink /sbin/ueventd ../init 777 0 0
+file /sbin/voldupdater.sh initramfs/sbin/voldupdater.sh 777 0 0 
+file /sbin/bsc_rw initramfs/sbin/bsc_rw 777 0 0
+file /sbin/playback_hs_init_sh initramfs/sbin/playback_hs_init_sh 777 0 0
+file /sbin/playback_spk_init_sh initramfs/sbin/playback_spk_init_sh 777 0 0
+file /sbin/watchdog-simple initramfs/sbin/watchdog-simple 777 0 0
+
+#RLE part
+file /sbin/rle_to_fb initramfs/sbin/rle_to_fb 777 0 0
+file /sbin/updating.rle initramfs/sbin/updating.rle 777 0 0
+file /sbin/failed.rle initramfs/sbin/failed.rle 777 0 0
+file /sbin/done.rle initramfs/sbin/done.rle 777 0 0
+
+# modem part
+nod /dev/bcm_kril 777 0 0 c 201 0
+nod /dev/bcm_log 777 0 0 c 202 0
+nod /dev/bcm_atc 777 0 0 c 203 0
+nod /dev/bcm_fuse_ipc 777 0 0 c 204 0
+nod /dev/bcm_rpc 777 0 0 c 205 0
+
+#dir /system 777 0 0
+#dir /system/bin 777 0 0
+file /bin/mttlog initramfs/bin/mttlog 776 0 0
+file /bin/mtttest initramfs/bin/mtttest 777 0 0
+
+#Add apanic reader application
+file /bin/apanic_reader initramfs/bin/apanic_reader 777 0 0

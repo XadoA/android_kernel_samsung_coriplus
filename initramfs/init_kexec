@@ -1,0 +1,30 @@
+#!/bin/sh
+# example rcS script
+echo "Welcome to Linux Crash Dump!"
+
+#Mount proc
+mkdir /proc
+mount -t proc proc /proc
+
+#Create device nodes
+mknod /dev/null c 1 3
+mknod /dev/tty c 5 0
+
+mknod /dev/ttyS0 c 4 0
+mknod /dev/tty1 c 4 1
+mknod /dev/tty2 c 4 2
+mknod /dev/tty3 c 4 3
+mknod /dev/tty4 c 4 4
+
+sleep 3
+
+mkdir /mnt
+mknod /dev/mmcblk1 b 179 24
+mknod /dev/mmcblk1p1 b 179 25
+mount -w -t vfat /dev/mmcblk1p1 /mnt
+cd /mnt
+cp /proc/vmcore .
+sync
+
+/bin/busybox sh
+
