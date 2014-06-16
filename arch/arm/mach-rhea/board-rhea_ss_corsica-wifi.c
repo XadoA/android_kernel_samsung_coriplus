@@ -42,7 +42,7 @@
 
 #include <mach/sdio_platform.h>
 #include <mach/rdb/brcm_rdb_padctrlreg.h>
-#include "board-rhea_ss_nevis-wifi.h"
+#include "board-rhea_ss_corsica-wifi.h"
 
 
 #ifdef CONFIG_BRCM_UNIFIED_DHD_SUPPORT
@@ -284,10 +284,7 @@ static int rhea_wifi_power(int on)
 	if (clk32kaudio_reg && !on && rhea_wifi_power_state)
 		regulator_disable(clk32kaudio_reg);
 #endif
-	if (on)
-		bcm_sdiowl_init(on);
-	else
-		bcm_sdiowl_term();
+	bcm_sdiowl_init(on);
 
 	rhea_wifi_power_state = on;
 

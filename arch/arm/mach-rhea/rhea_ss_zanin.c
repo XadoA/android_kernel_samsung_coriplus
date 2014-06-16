@@ -112,8 +112,16 @@
 #include <linux/bcmi2cnfc.h>
 #endif
 
-#if defined(CONFIG_SENSORS_GP2A)
-#include <linux/gp2a_dev.h>
+#if defined  (CONFIG_SENSORS_K3DH)
+#include <linux/k3dh_dev.h>
+#endif
+
+#if defined  (CONFIG_SENSORS_HSCDTD006A) || defined(CONFIG_SENSORS_HSCDTD008A) 
+#include <linux/hscd_i2c_dev.h>
+#endif
+
+#if defined(CONFIG_SENSORS_GP2AP002)
+#include <linux/gp2ap002_dev.h>
 #endif
 
 #ifdef CONFIG_I2C_GPIO
@@ -768,9 +776,27 @@ static struct i2c_board_info __initdata zinitix_i2c_devices[] = {
 };
 #endif
 
-#if defined  (CONFIG_SENSORS_GP2A)
+#if defined  (CONFIG_SENSORS_K3DH)
+static struct k3dh_platform_data k3dh_platform_data = {
+	.orientation = {
+	1, 0, 0,
+	0, 1, 0,
+	0, 0, 1},	      
+};
+#endif
+
+#if defined  (CONFIG_SENSORS_HSCDTD006A) || defined(CONFIG_SENSORS_HSCDTD008A) 
+static struct hscd_i2c_platform_data hscd_i2c_platform_data = {
+	.orientation = {
+	1, 0, 0,
+	0, -1, 0,
+	0, 0, -1},	      
+};
+#endif
+
+#if defined  (CONFIG_SENSORS_GP2AP002)
 #define PROXI_INT_GPIO_PIN      (92)
-static struct gp2a_prox_platform_data gp2a_prox_platform_data = {
+static struct gp2ap002_platform_data gp2ap002_platform_data = {
 	.irq_gpio = PROXI_INT_GPIO_PIN,
 	.irq = gpio_to_irq(PROXI_INT_GPIO_PIN),        
 };
@@ -781,19 +807,21 @@ static struct i2c_board_info __initdata rhea_ss_i2cgpio1_board_info[] = {
 #if defined  (CONFIG_SENSORS_K3DH)
 	{
 		I2C_BOARD_INFO("k3dh", 0x19),
+		.platform_data = &k3dh_platform_data,                        
 	},
 #endif
 
-#if defined  (CONFIG_SENSORS_HSCD)
+#if defined  (CONFIG_SENSORS_HSCDTD006A) || defined(CONFIG_SENSORS_HSCDTD008A) 
 	{
 		I2C_BOARD_INFO("hscd_i2c", 0x0c),
+		.platform_data = &hscd_i2c_platform_data,               
 	},
  #endif
 	
-#if defined  (CONFIG_SENSORS_GP2A)
+#if defined  (CONFIG_SENSORS_GP2AP002)
 	{
-		I2C_BOARD_INFO("gp2a_prox", 0x44),
-		.platform_data = &gp2a_prox_platform_data,            
+		I2C_BOARD_INFO("gp2ap002", 0x44),
+		.platform_data = &gp2ap002_platform_data,            
 	},
 #endif
 
@@ -1014,9 +1042,9 @@ static unsigned int  rheass_button_adc_values [3][2] =
 	/* SEND/END Min, Max*/
         {0,     95},
 	/* Volume Up  Min, Max*/
-        {96,    240},
+        {96,    200},
 	/* Volue Down Min, Max*/
-        {241,   500},
+        {201,   480},
 };
 
 static struct kona_headset_pd headset_data = {
@@ -1447,7 +1475,7 @@ static struct platform_ktd259b_backlight_data bcm_ktd259b_backlight_data = {
 
 
 static struct platform_device bcm_backlight_devices = {
-    .name           = "backlight-wire",
+    .name           = "panel",
 	.id 		= -1,
 	.dev 	= {
 		.platform_data  =       &bcm_ktd259b_backlight_data,
@@ -1678,7 +1706,7 @@ static int rhea_camera_reset(struct device *dev)
 static struct v4l2_subdev_sensor_interface_parms sr200pc20m_if_params = {
 	.if_type = V4L2_SUBDEV_SENSOR_SERIAL,
 	.if_mode = V4L2_SUBDEV_SENSOR_MODE_SERIAL_CSI2,
-    .orientation =V4L2_SUBDEV_SENSOR_LANDSCAPE,
+	.orientation = V4L2_SUBDEV_SENSOR_ORIENT_90,
 	.facing = V4L2_SUBDEV_SENSOR_BACK,
 	.parms.serial = {
 		.lanes = 1,

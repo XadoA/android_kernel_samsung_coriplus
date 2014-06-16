@@ -33,6 +33,7 @@ obj-$(CONFIG_MACH_RHEA_SS_IVORYSS) += rhea_ss_ivoryss.o rhea_ss_ivoryss_pinmux.o
 obj-$(CONFIG_MACH_RHEA_SS_CORIPLUS) += rhea_ss_coriplus.o rhea_ss_coriplus_pinmux.o board-bcm59039-coriplus.o board-rhea_ss_coriplus-wifi.o
 obj-$(CONFIG_MACH_RHEA_SS_NEVIS) += rhea_ss_nevis.o rhea_ss_nevis_pinmux.o board-d2083-nevis.o board-rhea_ss_nevis-wifi.o
 obj-$(CONFIG_MACH_RHEA_SS_NEVISP) += rhea_ss_nevis.o rhea_ss_nevis_pinmux.o board-d2083-nevis.o board-rhea_ss_nevis-wifi.o
+obj-$(CONFIG_MACH_RHEA_SS_CORSICA) += rhea_ss_corsica.o rhea_ss_corsica_pinmux.o board-bcm59039-corsica.o board-rhea_ss_corsica-wifi.o
 obj-$(CONFIG_MACH_RHEA_FARADAY_EB10) += rhea_ray.o rhea_faraday_eb10_pinmux.o
 obj-$(CONFIG_MACH_RHEA_FARADAY_EB20) += rhea_faraday.o rhea_faraday_eb20_pinmux.o
 obj-$(CONFIG_MACH_RHEA_DALTON2_EB30) += rhea_dalton2.o rhea_dalton2_eb30_pinmux.o 
@@ -48,6 +49,9 @@ obj-y += ss_musb_info.o
 
 obj-$(CONFIG_ROM_SEC_DISPATCHER_LIB) += sec_bridge_tz.i
 obj-$(CONFIG_ROM_SEC_DISPATCHER_SRC) += rhea_smc.o
+
+CFLAGS_rhea_smc.o :=$(call as-instr,.arch_extension sec,-DSMC_INSTR=1)
+
 # obj-$(CONFIG_MFD_BCM59055) += board-bcm59055.o
 # obj-$(CONFIG_MFD_BCM59039) += board-bcm59039.o
 # obj-$(CONFIG_MFD_BCM59042) += board-bcm59042.o

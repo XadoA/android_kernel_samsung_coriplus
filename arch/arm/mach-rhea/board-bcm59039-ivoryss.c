@@ -834,8 +834,8 @@ static struct bcmpmu_voltcap_map batt_voltcap_map[] = {
 };
 
 static struct bcmpmu_cutoff_map cutoff_cal_map[] = {
-		{3480, 2, 0},
-		{3440, 1, 0},
+		{3470, 2, 0},
+		{3425, 1, 0},
 		{3400, 0, 0},
 };
 
@@ -968,7 +968,7 @@ static struct bcmpmu_platform_data bcmpmu_plat_data = {
 	.fg_smpl_rate = 2083,
 	.fg_slp_rate = 32000,
 	.fg_slp_curr_ua = 1220,
-	.fg_factor = 820, // Ivory 0.2 H/W
+	.fg_factor = 876, // Ivory 0.3 H/W
 	.fg_sns_res = 10,
 	.batt_voltcap_map = &batt_voltcap_map[0],
 	.batt_voltcap_map_len = ARRAY_SIZE(batt_voltcap_map),
@@ -979,14 +979,14 @@ static struct bcmpmu_platform_data bcmpmu_plat_data = {
 	.batt_impedence = 140,
 	.sys_impedence = 35, // Brad measured 35.419 on Ivory @ 6/4/12:10
 	.chrg_1c_rate = 1300,
-	.chrg_eoc = 100,
+	.chrg_eoc = 95, // Ivory 0.3 H/W
 	.support_hw_eoc = 0,
 	.chrg_zone_map = &chrg_zone[0],
 	.fg_capacity_full = (1300) * 3600,
 	.support_fg = 1,
 	.support_chrg_maint = 1,
-	.wd_setting = &bcm59039_wd_setting,
 	.chrg_resume_lvl = 4152, /* 99% = 4160 - (4160-4122)/5 * 1*/
+	.wd_setting = &bcm59039_wd_setting,
 	.fg_support_tc = 1,
 	.fg_tc_dn_lvl = 50, /* 5c */
 	.fg_tc_up_lvl = 200, /* 20c */

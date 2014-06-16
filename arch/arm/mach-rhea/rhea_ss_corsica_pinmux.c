@@ -155,14 +155,11 @@ static struct __init pin_config board_pin_config[] = {
 	/* Sensor(Acceleromter,Magnetic,Proximity) */
 	PIN_CFG(GPIO15, GPIO15, 0, OFF, OFF, 0, 0, 8MA), 			/* SENSOR_SDA*/
 	PIN_CFG(GPIO32, GPIO32, 0, OFF, OFF, 0, 0, 8MA), 			/* SENSOR_SCL*/	
-	PIN_CFG(ICUSBDM, GPIO122, 0, OFF, ON, 0, 0, 8MA), 			/* PROXI_INT*/
 
 	/* SIMCARD */
 	PIN_CFG(SIMRST, SIMRST, 0, OFF, ON, 0, 0, 8MA), 			//	SIM_RST
 	PIN_CFG(SIMDAT, SIMDAT, 0, OFF, ON, 0, 0, 8MA), 			//	SIM_IO
 	PIN_CFG(SIMCLK, SIMCLK, 0, OFF, ON, 0, 0, 8MA), 			//	SIM_CLK
-
-	/* Touch */	
 	PIN_CFG(SSPSYN, SIM2RST, 0, OFF, OFF, 0, 0, 8MA),
 	PIN_CFG(SSPDO, SIM2DAT, 0, OFF, OFF, 0, 0, 8MA),
 	PIN_CFG(SSPCK, SIM2CLK, 0, OFF, OFF, 0, 0, 8MA),
@@ -199,8 +196,6 @@ static struct __init pin_config board_pin_config[] = {
 int __init pinmux_board_init(void)
 {
 	int i;
-	//void __iomem *base = g_chip_pin_desc.base;
-
 	for (i=0; i<ARRAY_SIZE(board_pin_config); i++)
 		pinmux_set_pin_config(&board_pin_config[i]);
 

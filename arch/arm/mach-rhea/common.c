@@ -596,6 +596,13 @@ static struct platform_device board_kona_otg_platform_device = {
 };
 #endif
 
+#ifdef CONFIG_MFD_D2083
+static struct platform_device fsa9480_otg_xceiv_platform_device = {
+	.name = "fsa9480_otg_xceiv",
+	.id = -1,
+};
+#endif
+
 #ifdef CONFIG_KONA_CPU_FREQ_DRV
 struct kona_freq_tbl kona_freq_tbl[] = {
 	FTBL_INIT(156000, PI_OPP_ECONOMY),
@@ -607,12 +614,7 @@ struct kona_freq_tbl kona_freq_tbl[] = {
 	FTBL_INIT(700000, PI_OPP_TURBO),
 #endif
 };
-#ifdef CONFIG_MFD_D2083
-static struct platform_device fsa9480_otg_xceiv_platform_device = {
-	.name = "fsa9480_otg_xceiv",
-	.id = -1,
-};
-#endif
+
 unsigned int get_cpufreq_from_opp(int opp)
 {
 	int i, num_of_opp;
@@ -667,11 +669,11 @@ static struct platform_device kona_cpufreq_device = {
 
 #ifdef CONFIG_KONA_AVS
 
-void avs_silicon_type_notify(u32 silicon_type, int freq_id)
+void avs_silicon_type_notify(u32 *silicon_type, int *freq_id)
 {
 	pr_info("%s : silicon type = %d freq = %d\n", __func__,
-			silicon_type,
-			freq_id);
+			*silicon_type,
+			*freq_id);
 	pm_init_pmu_sr_vlt_map_table(silicon_type, freq_id);
 }
 
@@ -692,7 +694,14 @@ static u32 vm_bin_B1_lut[4][VM_BIN_LUT_SIZE] = {
 	{97, 126, 161, UINT_MAX},
 	{159, 183, 249, UINT_MAX},
 	{96, 121, 151, UINT_MAX},
-	{133, 151, 200, UINT_MAX},
+	{133, 151, 200, UINT_MAX}
+};
+
+static u32 vm_bin_smic_lut[4][VM_BIN_LUT_SIZE] = {
+	{111, 135, 157, UINT_MAX},
+	{160, 191, 221, UINT_MAX},
+	{98, 127, 140, UINT_MAX},
+	{137, 161, 177, UINT_MAX}
 };
 
 u32 silicon_type_lut[VM_BIN_LUT_SIZE] = {
@@ -733,7 +742,7 @@ static struct kona_avs_pdata avs_pdata = {
 	.vm_bin_B0_lut = vm_bin_B0_lut,
 	.vm_bin_B1_lut = vm_bin_B1_lut,
 	.silicon_type_lut = silicon_type_lut,
-
+	.vm_bin_smic_lut = vm_bin_smic_lut,
 	.ate_lut = ate_lut,
 
 	.silicon_type_notify = avs_silicon_type_notify,
@@ -917,6 +926,7 @@ static struct platform_device *board_common_plat_devices[] __initdata = {
 #ifdef CONFIG_MFD_D2083
 	&fsa9480_otg_xceiv_platform_device,
 #endif
+
 };
 
 static int __init setup_etm(char *p)

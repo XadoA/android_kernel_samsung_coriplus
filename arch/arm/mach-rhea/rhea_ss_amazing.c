@@ -106,10 +106,6 @@
 #include <linux/broadcom/bcm_bzhw.h>
 #endif
 
-#if defined(CONFIG_SENSORS_GP2A)
-#include <linux/gp2a_dev.h>
-#endif
-
 #ifdef CONFIG_I2C_GPIO
 
 #include <linux/i2c-gpio.h>
@@ -365,7 +361,7 @@ static struct bcm590xx_platform_data bcm590xx_plat_data = {
 	 */
 	.i2c_pdata = {ADD_I2C_SLAVE_SPEED(BSC_BUS_SPEED_HS),},
 #else
-	.i2c_pdata	=  { ADD_I2C_SLAVE_SPEED(BSC_BUS_SPEED_400K), },
+	.i2c_pdata = {ADD_I2C_SLAVE_SPEED(BSC_BUS_SPEED_400K),},
 #endif
 	.pmu_event_cb = bcm590xx_event_callback,
 #ifdef CONFIG_BATTERY_BCM59055
@@ -608,7 +604,9 @@ static struct i2c_board_info __initdata pca953x_2_info[] = {
 #endif
 #endif /* CONFIG_GPIO_PCA953X */
 
-#define TSP_INT_GPIO_PIN      (121) //PSJ
+#ifdef CONFIG_TOUCHSCREEN_BT403_AMAZING
+#define TSP_INT_GPIO_PIN      (121)
+#endif
 
 #ifdef CONFIG_TOUCHSCREEN_TMA340_COOPERVE
 #define TSP_INT_GPIO_PIN      (121)
@@ -656,7 +654,7 @@ static struct tma340_platform_data tma340_platform_data = {
 
 
 #endif /* CONFIG_TOUCHSCREEN_TMA340_COOPERVE */
-
+#if 0
 static struct i2c_board_info __initdata rhea_ss_i2cgpio0_board_info[] = {
 
 #ifdef CONFIG_TOUCHSCREEN_TMA340_COOPERVE
@@ -676,6 +674,7 @@ static struct i2c_board_info __initdata rhea_ss_i2cgpio0_board_info[] = {
 #endif
 
 };
+#endif
 
 #if defined(CONFIG_TOUCHSCREEN_BT403_AMAZING)
 static struct i2c_board_info __initdata zinitix_i2c_devices[] = {
@@ -689,36 +688,7 @@ static struct i2c_board_info __initdata zinitix_i2c_devices[] = {
 };
 #endif
 
-#if defined  (CONFIG_SENSORS_GP2A)
-#define PROXI_INT_GPIO_PIN      (122)
-static struct gp2a_prox_platform_data gp2a_prox_platform_data = {
-	.irq_gpio = PROXI_INT_GPIO_PIN,
-	.irq = gpio_to_irq(PROXI_INT_GPIO_PIN),        
-};
-#endif
 
-static struct i2c_board_info __initdata rhea_ss_i2cgpio1_board_info[] = {
-
-#if defined  (CONFIG_SENSORS_K3DH)
-	{
-		I2C_BOARD_INFO("k3dh", 0x19),
-	},
-#endif
-
-#if defined  (CONFIG_SENSORS_HSCD)
-	{
-		I2C_BOARD_INFO("hscd_i2c", 0x0c),
-	},
- #endif
-	
-#if defined  (CONFIG_SENSORS_GP2A)
-	{
-		I2C_BOARD_INFO("gp2a_prox", 0x44),
-		.platform_data = &gp2a_prox_platform_data,            
-	},
-#endif
-
-};
 
 #ifdef CONFIG_TOUCHSCREEN_QT602240
 #ifdef CONFIG_GPIO_PCA953X
@@ -864,9 +834,8 @@ static struct i2c_board_info __initdata mpu6050_info[] =
 #ifdef CONFIG_KONA_HEADSET_MULTI_BUTTON
 
 #define HS_IRQ		gpio_to_irq(31)
-#define HSB_IRQ		BCM_INT_ID_AUXMIC_COMP1
-#define HSI_IRQ		BCM_INT_ID_AUXMIC_COMP2
-#define HSR_IRQ 	   BCM_INT_ID_AUXMIC_COMP2_INV
+#define HSB_IRQ		BCM_INT_ID_AUXMIC_COMP2
+#define HSB_REL_IRQ 	BCM_INT_ID_AUXMIC_COMP2_INV
 
 static unsigned int rheass_button_adc_values [3][2] =
 {
@@ -926,24 +895,28 @@ static struct resource board_headset_resource[] = {
 		.end = ACI_BASE_ADDR + SZ_4K - 1,
 		.flags = IORESOURCE_MEM,
 	},
-	{	/* For GPIO Headset IRQ */
+	{	/* For Headset IRQ */
 		.start = HS_IRQ,
 		.end = HS_IRQ,
 		.flags = IORESOURCE_IRQ,
 	},
-	{	/* For Headset insert IRQ */
-		.start = HSI_IRQ,
-		.end = HSI_IRQ,
-		.flags = IORESOURCE_IRQ,
-	},
-	{	/* For Headset remove IRQ */
-		.start = HSR_IRQ,
-		.end = HSR_IRQ,
-		.flags = IORESOURCE_IRQ,
-	},
-	{	/* COMP1 for Button*/
+	{	/* For Headset button  press IRQ */
 		.start = HSB_IRQ,
 		.end = HSB_IRQ,
+		.flags = IORESOURCE_IRQ,
+	},
+	{	/* For Headset button  release IRQ */
+		.start = HSB_REL_IRQ,
+		.end = HSB_REL_IRQ,
+		.flags = IORESOURCE_IRQ,
+	},
+		/* For backward compatibility keep COMP1
+		 * as the last resource. The driver which
+		 * uses only GPIO and COMP2, might not use this at all
+		 */
+	{	/* COMP1 for type detection */
+		.start = BCM_INT_ID_AUXMIC_COMP1,
+		.end = HSB_REL_IRQ,
 		.flags = IORESOURCE_IRQ,
 	},
 };
@@ -995,7 +968,7 @@ static struct spi_board_info spi_slave_board_info[] __initdata = {
 	 .chip_select = 0,	/* for each slave */
 	 .platform_data = NULL,	/* no spi_driver specific */
 	 .irq = 0,		/* IRQ for this device */
-	 .mode = SPI_MODE_1,	/* SPI mode 1 */
+	 .mode = SPI_LOOP,	/* SPI mode 0 */
 	 },
 #endif
 	/* TODO: adding more slaves here */
@@ -1119,9 +1092,9 @@ static struct sdio_platform_cfg board_sdio_param[] = {
 		.data_pullup = 0,
 		.devtype = SDIO_DEV_TYPE_WIFI,
 		.wifi_gpio = {
-			.reset		= 70,		/* WLAN_REG_ON : GPIO70 */
+			.reset		= 70,
 			.reg		= -1,
-			.host_wake	= 48,		/* WLAN_HOST_WAKE : GPIO48 */
+			.host_wake	= 48,
 			.shutdown	= -1,
 		},
 		.flags = KONA_SDIO_FLAGS_DEVICE_REMOVABLE,
@@ -1225,7 +1198,7 @@ static struct platform_device bcm_backlight_devices = {
 	|| defined(CONFIG_MACH_RHEA_FARADAY_EB10) \
 	|| defined(CONFIG_MACH_RHEA_DALTON) || defined(CONFIG_MACH_RHEA_RAY_EDN2X) || defined(CONFIG_MACH_RHEA_SS) \
 	|| defined(CONFIG_MACH_RHEA_RAY_DEMO)
-#define GPIO_SIM2LDO_EN		86
+#define GPIO_SIM2LDO_EN		99
 #endif
 #ifdef CONFIG_GPIO_PCA953X
 #define GPIO_SIM2LDOVSET	(KONA_MAX_GPIO + 7)
@@ -1301,7 +1274,7 @@ static struct platform_device tps728xx_vc_device_sim2 = {
 #if 0
 #ifdef CONFIG_FB_BRCM_RHEA
 static struct kona_fb_platform_data rhea_ss_dsi_display_fb_data = {
-	.get_dispdrv_func_tbl	= &DISPDRV_GetFuncTable,
+	.get_dispdrv_func_tbl	= &DISPDRV_ili9486_GetFuncTable,
 	.screen_width		= 320,
 	.screen_height		= 480,
 	.bytes_per_pixel	= 2,//2, //@HW
@@ -1431,16 +1404,16 @@ static struct platform_device board_bcmbt_rfkill_device = {
 #define GPIO_BT_WAKE 39
 #define GPIO_HOST_WAKE 47
 static struct bcm_bzhw_platform_data bcm_bzhw_data = {
-        .gpio_bt_wake = GPIO_BT_WAKE,
-        .gpio_host_wake = GPIO_HOST_WAKE,
+	.gpio_bt_wake = GPIO_BT_WAKE,
+	.gpio_host_wake = GPIO_HOST_WAKE,
 };
 
 static struct platform_device board_bcm_bzhw_device = {
-        .name = "bcm_bzhw",
-        .id = -1,
-        .dev = {
-                .platform_data = &bcm_bzhw_data,
-                },
+	.name = "bcm_bzhw",
+	.id = -1,
+	.dev = {
+		.platform_data = &bcm_bzhw_data,
+		},
 };
 #endif
 
@@ -1503,7 +1476,7 @@ static struct platform_device gps_hostwake= {
 
 static struct i2c_board_info rhea_i2c_camera[] = {
 	{
-		I2C_BOARD_INFO("camdrv_ss", S5K5CCGX_I2C_ADDRESS),
+		I2C_BOARD_INFO("camdrv_ss", S5K5CCGX_I2C_ADDRESS),		
 	},
 };
 
@@ -1785,6 +1758,7 @@ static int rhea_camera_power(struct device *dev, int on)
 	regulator_set_voltage(VCAM_IO_1_8_V,1800000,1800000);	
 	//ret = regulator_disable(VCAM_IO_1_8_V);
 
+	
 	gpio_request(CAM_CORE_EN, "cam_1_2v");
 	gpio_direction_output(CAM_CORE_EN,0); 
 
@@ -2004,7 +1978,7 @@ static struct v4l2_subdev_sensor_interface_parms sr030pc50_if_params = {
 	.if_type = V4L2_SUBDEV_SENSOR_SERIAL,
 	.if_mode = V4L2_SUBDEV_SENSOR_MODE_SERIAL_CSI2,
     .orientation =V4L2_SUBDEV_SENSOR_LANDSCAPE,
-    .facing = V4L2_SUBDEV_SENSOR_FRONT,
+     .facing = V4L2_SUBDEV_SENSOR_FRONT,
 	.parms.serial = {
 		.lanes = 1,
 		.channel = 1,
@@ -2038,12 +2012,12 @@ static struct platform_device rhea_camera_sub = {
 #include <linux/broadcom/wd-tapper.h>
 
 static struct wd_tapper_platform_data wd_tapper_data = {
-  /* Set the count to the time equivalent to the time-out in milliseconds
+  /* Set the count to the time equivalent to the time-out in seconds
    * required to pet the PMU watchdog to overcome the problem of reset in
    * suspend*/
-  .count = 120000,
-  .ch_num = 1,
-  .name = "aon-timer",
+	.count = 120,
+	.ch_num = 1,
+	.name = "aon-timer",
 };
 
 static struct platform_device wd_tapper = {
@@ -2093,7 +2067,7 @@ static struct platform_device *rhea_ray_plat_devices[] __initdata = {
 #endif
 
 #ifdef CONFIG_BCM_BZHW
-        &board_bcm_bzhw_device,
+	&board_bcm_bzhw_device,
 #endif
 
 #ifdef CONFIG_BCM_BT_LPM
@@ -2146,6 +2120,9 @@ static void __init rhea_ray_add_i2c_devices (void)
 			pmu_info,
 			ARRAY_SIZE(pmu_info));
 #endif
+#ifdef CONFIG_MFD_BCMPMU
+	board_pmu_init();
+#endif
 #ifdef CONFIG_GPIO_PCA953X
 	i2c_register_board_info(1,
 			pca953x_info,
@@ -2187,7 +2164,7 @@ i2c_register_board_info(0x3, rhea_ss_i2cgpio0_board_info,
 				ARRAY_SIZE(rhea_ss_i2cgpio0_board_info));
 #endif //PSJ
 
-i2c_register_board_info(0x3, zinitix_i2c_devices,
+     i2c_register_board_info(0x3, zinitix_i2c_devices,
 				ARRAY_SIZE(zinitix_i2c_devices)); //PSJ
 }
 
@@ -2196,10 +2173,10 @@ static int __init rhea_ray_add_lateInit_devices (void)
 	board_add_sdio_devices();
 #ifdef CONFIG_BRCM_UNIFIED_DHD_SUPPORT
 
-	printk(KERN_ERR "Calling WLAN_INIT!\n");
+	printk(KERN_INFO "Calling WLAN_INIT!\n");
 
-	 rhea_wlan_init();
-	 	printk(KERN_ERR "DONE WLAN_INIT!\n");
+	rhea_wlan_init();
+	printk(KERN_INFO "DONE WLAN_INIT!\n");
 #endif
 	return 0;
 }
@@ -2210,11 +2187,11 @@ static void __init rhea_ray_reserve(void)
 }
 
 
-/* For Samsung long duration testing wake_lock must be hold once UART 
- * cable is connected, so that system won't go to sleep. 
+/* For Samsung long duration testing wake_lock must be hold once UART
+ * cable is connected, so that system won't go to sleep.
  * uas_notify_init() will register for JIG_UART insertion and removal and
  * hold and release the wake_lock accordingly
-*/
+ */
 struct notifier_block nb[2];
 #ifdef CONFIG_HAS_WAKELOCK
 static struct wake_lock jig_uart_wl;
@@ -2226,9 +2203,9 @@ static struct pi_mgr_qos_node qos_node;
 
 extern int bcmpmu_get_uas_sw_grp(void);
 static int uas_jig_uart_handler(struct notifier_block *nb,
-		unsigned long event, void *para)
+				unsigned long event, void *para)
 {
-	switch(event) {
+	switch (event) {
 	case BCMPMU_JIG_EVENT_UART:
 		pr_info("%s: BCMPMU_JIG_EVENT_UART uart_connected\n", __func__);
 #ifdef CONFIG_HAS_WAKELOCK
@@ -2240,18 +2217,17 @@ static int uas_jig_uart_handler(struct notifier_block *nb,
 		pi_mgr_qos_request_update(&qos_node, 0);
 #endif
 		break;
-
 	case BCMPMU_USB_EVENT_ID_CHANGE:
 	default:
 		pr_info("%s: UART JIG SW GRP %d\n",
 			__func__, bcmpmu_get_uas_sw_grp());
-		if(bcmpmu_get_uas_sw_grp() != UAS_SW_GRP_UART_JIG) {
+		if (bcmpmu_get_uas_sw_grp() != UAS_SW_GRP_UART_JIG) {
 #ifdef CONFIG_HAS_WAKELOCK
 			if (wake_lock_active(&jig_uart_wl))
 				wake_unlock(&jig_uart_wl);
 #endif
 #ifdef CONFIG_KONA_PI_MGR
-		pi_mgr_qos_request_update(&qos_node, PI_MGR_QOS_DEFAULT_VALUE);
+			pi_mgr_qos_request_update(&qos_node, PI_MGR_QOS_DEFAULT_VALUE);
 #endif
 		}
 		break;
@@ -2285,13 +2261,13 @@ static int __init uas_notify_init(void)
 	ret |= bcmpmu_add_notifier(BCMPMU_USB_EVENT_ID_CHANGE, &nb[1]);
 	if (ret) {
 		pr_info("%s: failed to register for JIG UART notification\n",
-				__func__);
+			__func__);
 		return -1;
 	}
 #ifdef CONFIG_KONA_PI_MGR
 	pi_mgr_qos_add_request(&qos_node, "jig_uart", PI_MGR_PI_ID_ARM_SUB_SYSTEM,
-					PI_MGR_QOS_DEFAULT_VALUE);
-#endif 
+			       PI_MGR_QOS_DEFAULT_VALUE);
+#endif
 #ifdef CONFIG_HAS_WAKELOCK
 	wake_lock_init(&jig_uart_wl, WAKE_LOCK_SUSPEND, "jig_uart_wake");
 #endif
@@ -2302,14 +2278,15 @@ static int __init uas_notify_init(void)
 			wake_lock(&jig_uart_wl);
 #endif
 #ifdef CONFIG_KONA_PI_MGR
-	pi_mgr_qos_request_update(&qos_node, 0);
+		pi_mgr_qos_request_update(&qos_node, 0);
 #endif
 
-	}	
+	}
 	return 0;
 }
 
 late_initcall(uas_notify_init);
+
 
 
 #define TSP_SDA 27
@@ -2332,29 +2309,11 @@ static struct platform_device touch_i2c_gpio_device = {
         },
 };
 
-#define SENSOR_SDA 15
-#define SENSOR_SCL 32
-
-static struct i2c_gpio_platform_data sensor_i2c_gpio_data = {
-        .sda_pin    = SENSOR_SDA,
-        .scl_pin    = SENSOR_SCL,
-        .udelay  = 3,  //// brian :3
-        .timeout = 100,
-};
-
-static struct platform_device sensor_i2c_gpio_device = {
-        .name       = "i2c-gpio",
-        .id     = 0x4,
-        .dev        = {
-                .platform_data  = &sensor_i2c_gpio_data,
-        },
-};
-
 static struct platform_device *gpio_i2c_devices[] __initdata = {
 
 #if defined(CONFIG_I2C_GPIO)
 	&touch_i2c_gpio_device,
-	&sensor_i2c_gpio_device,	
+	
 #endif
 };
 

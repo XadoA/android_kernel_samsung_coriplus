@@ -96,8 +96,6 @@ static struct pi_state arm_core_states[] = {
 
 	PI_STATE(ARM_CORE_STATE_DS_DORMANT,
 		RETN_POLICY,RHEA_C5_TARGET_RESIDENCY, 0),
-
-
 };
 #ifdef CONFIG_KONA_PI_DFS_STATS
 static cputime64_t arm_core_time_in_state[ARM_PI_NUM_OPP];
@@ -587,6 +585,16 @@ char *get_opp_name(int opp)
 
 	return name;
 }
+
+int rhea_pi_mgr_print_act_pis(void)
+{
+	pr_info("\n*** ACTIVE PIs DURING SUSPEND ***\n");
+	pr_info("\tPI \t STATE \t USE_CNT\n");
+	pi_mgr_print_active_pis();
+	pr_info("**********************************\n");
+	return 0;
+}
+EXPORT_SYMBOL(rhea_pi_mgr_print_act_pis);
 
 void __init rhea_pi_mgr_init()
 {

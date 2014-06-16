@@ -67,11 +67,13 @@ static void rhea_poweroff(void)
 
 static void rhea_restart(char mode, const char *cmd)
 {
-#ifdef CONFIG_MFD_BCMPMU
 	if (hard_reset_reason)
+#if defined( CONFIG_MFD_BCMPMU )
 		bcmpmu_client_hard_reset(hard_reset_reason);
-	else
+#else
+		;
 #endif
+	else
 		arm_machine_restart('h', cmd);
 }
 

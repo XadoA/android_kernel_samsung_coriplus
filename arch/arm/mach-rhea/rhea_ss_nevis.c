@@ -104,12 +104,16 @@
 #include <linux/broadcom/bcm_bzhw.h>
 #endif
 
-#if defined(CONFIG_SENSORS_GP2A)
-#include <linux/gp2a_dev.h>
+#if defined  (CONFIG_SENSORS_K3DH)
+#include <linux/k3dh_dev.h>
 #endif
 
-#if defined(CONFIG_SENSORS_PX3215)
-#include <linux/px3215.h>
+#if defined  (CONFIG_SENSORS_HSCDTD006A) || defined(CONFIG_SENSORS_HSCDTD008A) 
+#include <linux/hscd_i2c_dev.h>
+#endif
+
+#if defined(CONFIG_SENSORS_GP2AP002)
+#include <linux/gp2ap002_dev.h>
 #endif
 
 #ifdef CONFIG_I2C_GPIO
@@ -158,104 +162,6 @@
 #endif
 #ifdef CONFIG_WD_TAPPER
 #include <linux/broadcom/wd-tapper.h>
-#endif
-
-#ifdef CONFIG_RMI4_I2C
-#include <linux/interrupt.h>
-#include <linux/rmi.h>
-#include <mach/gpio.h>
-
-
-#define SYNA_TM2303 0x00000800
-
-#define SYNA_BOARDS SYNA_TM2303 /* (SYNA_TM1333 | SYNA_TM1414) */
-#define SYNA_BOARD_PRESENT(board_mask) (SYNA_BOARDS & board_mask)
-
-struct syna_gpio_data {
-	u16 gpio_number;
-	char* gpio_name;
-};
-
-#define TOUCH_ON 1
-#define TOUCH_OFF 0
-#define TOUCH_POWER_GPIO 43 //PSJ
-
-#if defined(CONFIG_MFD_D2083_BRINGUP_RECHECK)
-extern void touch_ldo_onoff(int onoff);
-#endif
-
-static int s2200_ts_power(int on_off)
-{
-	int retval;
-
-	pr_info("%s: TS power change to %d.\n", __func__, on_off);
-#if defined(CONFIG_MFD_D2083_BRINGUP_RECHECK)
-	if (on_off == TOUCH_ON) {
-		touch_ldo_onoff(1);
-	}else{
-		touch_ldo_onoff(0);
-	}	
-#else
-	retval = gpio_request(TOUCH_POWER_GPIO,"Touch_en");
-	if (retval) {
-		pr_err("%s: Failed to acquire power GPIO, code = %d.\n",
-			 __func__, retval);
-		return retval;
-	}
-
-	if (on_off == TOUCH_ON) {
-		retval = gpio_direction_output(TOUCH_POWER_GPIO,1);
-		if (retval) {
-			pr_err("%s: Failed to set power GPIO to 1, code = %d.\n",
-				__func__, retval);
-			return retval;
-	}
-		gpio_set_value(TOUCH_POWER_GPIO,1);
-	} else {
-		retval = gpio_direction_output(TOUCH_POWER_GPIO,0);
-		if (retval) {
-			pr_err("%s: Failed to set power GPIO to 0, code = %d.\n",
-				__func__, retval);
-			return retval;
-		}
-		gpio_set_value(TOUCH_POWER_GPIO,0);
-	}
-
-	gpio_free(TOUCH_POWER_GPIO);
-#endif	// CONFIG_MFD_D2083_BRINGUP_RECHECK
-	mdelay(200);
-	return 0;
-}
-
-static int synaptics_touchpad_gpio_setup(void *gpio_data, bool configure)
-{
-	int retval=0;
-	struct syna_gpio_data *data = gpio_data;
-
-	pr_info("%s: RMI4 gpio configuration set to %d.\n", __func__,
-		configure);
-
-	if (configure) {
-		retval = gpio_request(data->gpio_number, "rmi4_attn");
-		if (retval) {
-			pr_err("%s: Failed to get attn gpio %d. Code: %d.",
-			       __func__, data->gpio_number, retval);
-			return retval;
-		}
-
-		retval = gpio_direction_input(data->gpio_number);
-		if (retval) {
-			pr_err("%s: Failed to setup attn gpio %d. Code: %d.",
-			       __func__, data->gpio_number, retval);
-			gpio_free(data->gpio_number);
-		}
-	} else {
-		pr_warn("%s: No way to deconfigure gpio %d.",
-		       __func__, data->gpio_number);
-	}
-
-	return s2200_ts_power(configure);
-}
 #endif
 
 #if defined(CONFIG_SEC_CHARGING_FEATURE)
@@ -595,8 +501,8 @@ static struct bcm_keypad_platform_info bcm_keypad_data = {
 };
 #endif
 #if 1
-#define MUSB_SCL 0
-#define MUSB_SDA 1
+#define MUSB_SCL 56
+#define MUSB_SDA 98
 #define MUSB_INT 92
 
 static struct i2c_gpio_platform_data musb_i2c_gpio_data = {
@@ -626,10 +532,10 @@ static struct i2c_board_info __initdata musb_i2c_devices[] = {
 
 #define BCMBT_NFC_IRQ_GPIO	(99)       //NFC_IRQ
 #define BCMBT_NFC_CLK_REQ_GPIO	(43)       //NFC_CLK_REQ - do not use
-#define BCMBT_NFC_WAKE_GPIO	(24)       //NFC_WAKE
-#define BCMBT_NFC_EN_GPIO	(25)       //NFC_EN
-#define BCMBT_NFC_I2C_SDA_GPIO	(19)       //NFC_SDA
-#define BCMBT_NFC_I2C_SCL_GPIO	(20)       //NFC_SCL
+#define BCMBT_NFC_WAKE_GPIO	(30)       //NFC_WAKE
+#define BCMBT_NFC_EN_GPIO	(87)       //NFC_EN
+#define BCMBT_NFC_I2C_SDA_GPIO	(85)       //NFC_SDA
+#define BCMBT_NFC_I2C_SCL_GPIO	(86)       //NFC_SCL
 
 static struct bcm2079x_platform_data bcm2079x_pdata = {
 	.irq_gpio = BCMBT_NFC_IRQ_GPIO,
@@ -661,6 +567,7 @@ static struct platform_device rhea_nfc_i2c_gpio_device = {
         .id                     = 0x5,
         .dev.platform_data      = &rhea_nfc_i2c_gpio_platdata,
 };
+
 #endif
 
 #ifdef CONFIG_GPIO_PCA953X
@@ -795,186 +702,36 @@ static struct i2c_board_info __initdata zinitix_i2c_devices[] = {
 };
 #endif
 
-#if defined (CONFIG_TOUCHSCREEN_F761)
-static struct i2c_board_info __initdata silabs_i2c_devices[] = {
-	{
-				I2C_BOARD_INFO("silabs-f760", 0x20),
-				.irq = gpio_to_irq(TSP_INT_GPIO_PIN),
-	},
-};
-#endif
-
-#if defined (CONFIG_TOUCHSCREEN_S2200)
-
-int pins_to_gpio (bool to_gpio)
-{
-/*	if (to_gpio) {
-		gpio_tlmm_config(GPIO_CFG(TSP_SDA, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-		gpio_tlmm_config(GPIO_CFG(TSP_SCL, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-		gpio_tlmm_config(GPIO_CFG(TSP_INT, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-	} else {
-		gpio_tlmm_config(GPIO_CFG(TSP_SDA, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-		gpio_tlmm_config(GPIO_CFG(TSP_SCL, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-		gpio_tlmm_config(GPIO_CFG(TSP_INT, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-	}
-*/	
-	return 0;
-}
-static struct s2200_ts_platform_data s2200_ts_pdata = {
-	.max_x		= 240,
-	.max_y		= 320,
-	.gpio_sda	= 89,
-	.gpio_scl	= 90,
-	.gpio_int	= 91,
-//	.gpio_vdd_en	= ,
-	.pins_to_gpio	= pins_to_gpio,
-};
-
-static struct i2c_board_info __initdata synaptics_i2c_devices[] = {
-	{
-		I2C_BOARD_INFO("synaptics_s2200_ts", 0x20),
+#if defined (CONFIG_TOUCHSCREEN_MMS134S)
+static struct i2c_board_info __initdata zinitix_i2c_devices[] = {
+	  {
+		I2C_BOARD_INFO("sec_touch", 0x48),
 		.irq = gpio_to_irq(TSP_INT_GPIO_PIN),
-		.platform_data = &s2200_ts_pdata,
-	},
-};
-
-#if 0
-#define AXIS_ALIGNMENT
-
-#define TM1414_ADDR 0x20
-// Line below is for two device testing only!
-#define TM1414_ATTN	 91
-
-struct syna_gpio_data {
-	u16 gpio_number;
-	char* gpio_name;
-};
-
-static struct syna_gpio_data tm1414_gpiodata = {
-	.gpio_number = TM1414_ATTN,
-	.gpio_name = "mcbsp1_fsr.gpio_157",
-};
-
-#define OMAP_PULL_ENA			(1 << 3)
-#define OMAP_PULL_UP			(1 << 4)
-#define OMAP_ALTELECTRICALSEL		(1 << 5)
-
-#define OMAP_PIN_INPUT_PULLUP		(OMAP_PULL_ENA | OMAP_INPUT_EN \
-						| OMAP_PULL_UP)
-
-static int synaptics_touchpad_gpio_setup(void *gpio_data, bool configure)
-{
-	int retval=0;
-	struct syna_gpio_data *data = gpio_data;
-
-	if (configure) {
-		retval = gpio_request(data->gpio_number, "rmi4_attn");
-		if (retval) {
-			pr_err("%s: Failed to get attn gpio %d. Code: %d.",
-			       __func__, data->gpio_number, retval);
-			return retval;
-		}
-
-		//omap_mux_init_signal(data->gpio_name, OMAP_PIN_INPUT_PULLUP);
-		retval = gpio_direction_input(data->gpio_number);
-		if (retval) {
-			pr_err("%s: Failed to setup attn gpio %d. Code: %d.",
-			       __func__, data->gpio_number, retval);
-			gpio_free(data->gpio_number);
-		}
-	} else {
-		pr_warn("%s: No way to deconfigure gpio %d.",
-		       __func__, data->gpio_number);
-	}
-
-	return retval;
-}
-
-static struct rmi_device_platform_data tm1414_platformdata = {
-	.driver_name = "rmi-generic",
-	.sensor_name = "TM1414",
-	.attn_gpio = TM1414_ATTN,
-	.attn_polarity = RMI_ATTN_ACTIVE_LOW,
-	.gpio_data = &tm1414_gpiodata,
-	.gpio_config = synaptics_touchpad_gpio_setup,
-	.reset_delay_ms = 100,
-	.axis_align = {
-		.flip_x = true,
-	},
-};
-
-static struct i2c_board_info bus2_i2c_devices[] = {
-     {
-         I2C_BOARD_INFO("rmi-generic", TM1414_ADDR),
-        .platform_data = &tm1414_platformdata,
-     },
+	  },
 };
 #endif
+
+#if defined  (CONFIG_SENSORS_K3DH)
+static struct k3dh_platform_data k3dh_platform_data = {
+	.orientation = {
+	0, 1, 0,
+	1, 0, 0,
+	0, 0, -1},	      
+};
 #endif
 
-#if 0//SYNA_BOARD_PRESENT(SYNA_TM2303)
-	/* tm2303 has four buttons.
-	 */
-
-#define AXIS_ALIGNMENT { }
-
-#define TM2303_ADDR 0x20
-#define TM2303_ATTN 91
-static unsigned char tm2303_f1a_button_codes[] = {KEY_MENU, KEY_BACK};
-
-static int tm2303_post_suspend(void *pm_data) {
-	pr_info("%s: RMI4 callback.\n", __func__);
-	return s2200_ts_power(TOUCH_OFF);
-}
-
-static int tm2303_pre_resume(void *pm_data) {
-	pr_info("%s: RMI4 callback.\n", __func__);
-	return s2200_ts_power(TOUCH_ON);
-}
-
-static struct rmi_f1a_button_map tm2303_f1a_button_map = {
-	.nbuttons = ARRAY_SIZE(tm2303_f1a_button_codes),
-	.map = tm2303_f1a_button_codes,
+#if defined  (CONFIG_SENSORS_HSCDTD006A) || defined(CONFIG_SENSORS_HSCDTD008A) 
+static struct hscd_i2c_platform_data hscd_i2c_platform_data = {
+	.orientation = {
+	-1, 0, 0,
+	0, 1, 0,
+	0, 0, -1},	      
 };
+#endif
 
-static struct syna_gpio_data tm2303_gpiodata = {
-	.gpio_number = TM2303_ATTN,
-	.gpio_name = "sdmmc2_clk.gpio_130",
-};
-
-static struct rmi_device_platform_data tm2303_platformdata = {
-	.driver_name = "rmi_generic",
-	.attn_gpio = TM2303_ATTN,
-	.attn_polarity = RMI_ATTN_ACTIVE_LOW,
-	.reset_delay_ms = 250,
-	.gpio_data = &tm2303_gpiodata,
-	.gpio_config = synaptics_touchpad_gpio_setup,
-	.axis_align = AXIS_ALIGNMENT,
-	.f1a_button_map = &tm2303_f1a_button_map,
-	.post_suspend = tm2303_post_suspend,
-	.pre_resume = tm2303_pre_resume,
-};
-
-static struct i2c_board_info __initdata synaptics_i2c_devices[] = {
-	{
-         I2C_BOARD_INFO("rmi_i2c", TM2303_ADDR),
-        .platform_data = &tm2303_platformdata,
-	},
-};
-
-#endif /* TM2303 */
-
-#if defined  (CONFIG_SENSORS_GP2A)
+#if defined  (CONFIG_SENSORS_GP2AP002)
 #define PROXI_INT_GPIO_PIN      (122)
-static struct gp2a_prox_platform_data gp2a_prox_platform_data = {
-	.irq_gpio = PROXI_INT_GPIO_PIN,
-	.irq = gpio_to_irq(PROXI_INT_GPIO_PIN),        
-};
-#endif
-
-#if defined(CONFIG_SENSORS_PX3215)
-#define PROXI_INT_GPIO_PIN      (122)
-static struct px3215_platform_data px3215_platform_data = {
+static struct gp2ap002_platform_data gp2ap002_platform_data = {
 	.irq_gpio = PROXI_INT_GPIO_PIN,
 	.irq = gpio_to_irq(PROXI_INT_GPIO_PIN),        
 };
@@ -985,26 +742,21 @@ static struct i2c_board_info __initdata rhea_ss_i2cgpio1_board_info[] = {
 #if defined  (CONFIG_SENSORS_K3DH)
 	{
 		I2C_BOARD_INFO("k3dh", 0x19),
+		.platform_data = &k3dh_platform_data,                        
 	},
 #endif
 
-#if defined  (CONFIG_SENSORS_HSCD) || defined(CONFIG_SENSORS_HSCDTD008A) 
+#if defined  (CONFIG_SENSORS_HSCDTD006A) || defined(CONFIG_SENSORS_HSCDTD008A) 
 	{
 		I2C_BOARD_INFO("hscd_i2c", 0x0c),
+		.platform_data = &hscd_i2c_platform_data,               
 	},
  #endif
 	
-#if defined  (CONFIG_SENSORS_GP2A)
+#if defined  (CONFIG_SENSORS_GP2AP002)
 	{
-		I2C_BOARD_INFO("gp2a_prox", 0x44),
-		.platform_data = &gp2a_prox_platform_data,            
-	},
-#endif
-
-#if defined(CONFIG_SENSORS_PX3215)
-	{
-		I2C_BOARD_INFO("dyna", 0x1e),
-		.platform_data = &px3215_platform_data,
+		I2C_BOARD_INFO("gp2ap002", 0x44),
+		.platform_data = &gp2ap002_platform_data,            
 	},
 #endif
 
@@ -1205,11 +957,11 @@ static struct i2c_board_info __initdata mpu6050_info[] =
 static unsigned int  rheass_button_adc_values [3][2] = 
 {
 	/* SEND/END Min, Max*/
-        {0,     99},
+        {0,     120},
 	/* Volume Up  Min, Max*/
-        {100,    240},
+        {121,    260},
 	/* Volue Down Min, Max*/
-        {241,   500},
+        {261,   520},
 };
 
 static struct kona_headset_pd headset_data = {
@@ -1921,7 +1673,8 @@ static int rhea_camera_power(struct device *dev, int on)
 		}
 	}
 	
-    return 0;	
+    return 0;
+	
 }
 
 static int rhea_camera_reset(struct device *dev)
@@ -1941,7 +1694,7 @@ static int rhea_camera_reset_sub(struct device *dev)
 static struct v4l2_subdev_sensor_interface_parms s5k4ecgx_if_params = {
 	.if_type = V4L2_SUBDEV_SENSOR_SERIAL,
 	.if_mode = V4L2_SUBDEV_SENSOR_MODE_SERIAL_CSI2,
-    .orientation =V4L2_SUBDEV_SENSOR_LANDSCAPE,
+	.orientation = V4L2_SUBDEV_SENSOR_ORIENT_90,
 	.facing = V4L2_SUBDEV_SENSOR_BACK,
 	.parms.serial = {
 		.lanes = 2,
@@ -1977,8 +1730,8 @@ static struct platform_device rhea_camera = {
 static struct v4l2_subdev_sensor_interface_parms sr030pc50_if_params = {
 	.if_type = V4L2_SUBDEV_SENSOR_SERIAL,
 	.if_mode = V4L2_SUBDEV_SENSOR_MODE_SERIAL_CSI2,
-    .orientation =V4L2_SUBDEV_SENSOR_LANDSCAPE,
-    .facing = V4L2_SUBDEV_SENSOR_FRONT,
+	.orientation = V4L2_SUBDEV_SENSOR_ORIENT_270,
+	.facing = V4L2_SUBDEV_SENSOR_FRONT,
 	.parms.serial = {
 		.lanes = 1,
 		.channel = 1,
@@ -2005,7 +1758,6 @@ static struct platform_device rhea_camera_sub = {
 		.platform_data = &iclink_sr030pc50,
 	},
 };
-
 
 #ifdef CONFIG_WD_TAPPER
 static struct wd_tapper_platform_data wd_tapper_data = {
@@ -2071,7 +1823,6 @@ static struct platform_device *rhea_ray_plat_devices[] __initdata = {
 	&rhea_camera,
 #endif
 	&rhea_camera_sub,
-
 
 #ifdef CONFIG_GPS_IRQ
 	&gps_hostwake,
@@ -2246,7 +1997,10 @@ static struct wake_lock jig_uart_wl;
 static struct pi_mgr_qos_node qos_node;
 #endif
 
+#if defined( CONFIG_MFD_BCMPMU )
 extern int bcmpmu_get_uas_sw_grp(void);
+#endif
+
 extern int musb_info_handler(struct notifier_block *nb, unsigned long event, void *para);
 static int uas_jig_uart_handler(struct notifier_block *nb,
 		unsigned long event, void *para)
@@ -2267,11 +2021,11 @@ static int uas_jig_uart_handler(struct notifier_block *nb,
 
 	case BCMPMU_USB_EVENT_ID_CHANGE:
 	default:
-#if !defined(CONFIG_MFD_D2083_BRINGUP_RECHECK)
+#if !defined(CONFIG_MFD_D2083)
 		pr_info("%s: UART JIG SW GRP %d\n",
 			__func__, bcmpmu_get_uas_sw_grp());
 #endif	// CONFIG_D2083_BRING_UP_RECHECK
-#if !defined(CONFIG_MFD_D2083_BRINGUP_RECHECK)
+#if !defined(CONFIG_MFD_D2083)
 		if(bcmpmu_get_uas_sw_grp() != UAS_SW_GRP_UART_JIG) {
 #endif		
 #ifdef CONFIG_HAS_WAKELOCK
@@ -2282,7 +2036,7 @@ static int uas_jig_uart_handler(struct notifier_block *nb,
 #ifdef CONFIG_KONA_PI_MGR
 		pi_mgr_qos_request_update(&qos_node, PI_MGR_QOS_DEFAULT_VALUE);
 #endif
-#if !defined(CONFIG_MFD_D2083_BRINGUP_RECHECK)
+#if !defined(CONFIG_MFD_D2083)
 		}
 #endif		
 		break;
@@ -2292,7 +2046,7 @@ static int uas_jig_uart_handler(struct notifier_block *nb,
 
 void uas_jig_force_sleep(void)
 {
-#if !defined(CONFIG_MFD_D2083_BRINGUP_RECHECK)
+#if !defined(CONFIG_MFD_D2083)
 	pr_info("%s: UART JIG SW GRP=%d\n",
 		__func__, bcmpmu_get_uas_sw_grp());
 #endif
@@ -2317,7 +2071,7 @@ static int __init uas_notify_init(void)
 	pr_info("uas_notify_init: STARTED\n");
 	nb[0].notifier_call = uas_jig_uart_handler;
 	nb[1].notifier_call = uas_jig_uart_handler;
-#if !defined(CONFIG_MFD_D2083_BRINGUP_RECHECK)	
+#if !defined(CONFIG_MFD_D2083)	
 	ret = bcmpmu_add_notifier(BCMPMU_JIG_EVENT_UART, &nb[0]);
 	ret |= bcmpmu_add_notifier(BCMPMU_USB_EVENT_ID_CHANGE, &nb[1]);
 	if (ret) {
@@ -2338,7 +2092,7 @@ static int __init uas_notify_init(void)
 #ifdef CONFIG_HAS_WAKELOCK
 	wake_lock_init(&jig_uart_wl, WAKE_LOCK_SUSPEND, "jig_uart_wake");
 #endif
-#if !defined(CONFIG_MFD_D2083_BRINGUP_RECHECK)	
+#if !defined(CONFIG_MFD_D2083)	
 	if (bcmpmu_get_uas_sw_grp() == UAS_SW_GRP_UART_JIG) {
 		pr_info("uas_notify_init: JIG UART CONNECTED\n");
 #ifdef CONFIG_HAS_WAKELOCK
@@ -2362,11 +2116,11 @@ static int __init uas_notify_init(void)
 
 late_initcall(uas_notify_init);
 
+#if defined(CONFIG_I2C_GPIO)
 
 
 #define TSP_SDA 89
 #define TSP_SCL 90
-#if defined(CONFIG_I2C_GPIO)
 static struct i2c_gpio_platform_data touch_i2c_gpio_data = {
         .sda_pin    = TSP_SDA,
         .scl_pin    = TSP_SCL,
@@ -2402,6 +2156,23 @@ static struct platform_device sensor_i2c_gpio_device = {
         },
 };
 
+#define USB_SDA	23
+#define USB_SCL	22
+
+static struct i2c_gpio_platform_data uUSB_i2c_gpio_data = {
+        .sda_pin    = USB_SDA,
+        .scl_pin    = USB_SCL,
+        .udelay  = 3,  //// brian :3
+        .timeout = 100,
+};
+
+static struct platform_device uUSB_i2c_gpio_device = {
+        .name       = "i2c-gpio",
+        .id     = 0x7,
+        .dev        = {
+                .platform_data  = &uUSB_i2c_gpio_data,
+        },
+};
 
 #ifdef CONFIG_KEYBOARD_EXPANDER
 
@@ -2446,10 +2217,9 @@ static struct platform_device amp_i2c_gpio_device = {
 
 
 static struct platform_device *gpio_i2c_devices[] __initdata = {
-#if 1
-	&musb_i2c_gpio_device,
-#endif	
+
 #if defined(CONFIG_I2C_GPIO)
+	&musb_i2c_gpio_device,
 	&touch_i2c_gpio_device,
 	&sensor_i2c_gpio_device,	
 #if defined(CONFIG_BCM2079X_NFC_I2C)
@@ -2563,10 +2333,6 @@ static void __init rhea_ray_add_devices(void)
 #ifndef CONFIG_KONA_ATAG_DT
 static void __init board_config_default_gpio(void)
 {
-	gpio_request(122,"uart_sel");
-	gpio_direction_output(122,1);
-	gpio_free(122);
-
 	gpio_request(70, "WLAN_REG_ON"); 
 	gpio_direction_output(70,0); 
 	gpio_free(70);
@@ -2590,6 +2356,7 @@ static void __init board_config_default_gpio(void)
 /*
  *   	     KONA FRAME BUFFER DISPLAY DRIVER PLATFORM CONFIG
  */ 
+#if defined(CONFIG_MACH_RHEA_SS_NEVIS) || defined(CONFIG_MACH_RHEA_SS_NEVISP)
 struct kona_fb_platform_data konafb_devices[] __initdata = {
 	{
 		.dispdrv_name  = "ILI9486", 
@@ -2598,15 +2365,15 @@ struct kona_fb_platform_data konafb_devices[] __initdata = {
 			.w0 = {
 				.bits = { 
 					.boot_mode  = 0,  	  
-					.bus_type   = RHEA_BUS_DSI,  	  
+					.bus_type   = RHEA_BUS_SMI,  
 					.bus_no     = RHEA_BUS_0,
-					.bus_ch     = RHEA_BUS_CH_0,
-					.bus_width  = 0,
-					.te_input   = RHEA_TE_IN_1_DSI0,	  
+					.bus_ch     = RHEA_BUS_CH_1,
+					.bus_width  = RHEA_BUS_WIDTH_16,
+					.te_input   = RHEA_TE_IN_0_LCD,
 					.col_mode_i = RHEA_CM_I_XRGB888,	  
 					.col_mode_o = RHEA_CM_O_RGB888, 
-				
 				},	
+			
 			},
 			.w1 = {
 				.bits = { 
@@ -2618,14 +2385,41 @@ struct kona_fb_platform_data konafb_devices[] __initdata = {
 	},
 };
 
+#else
+struct kona_fb_platform_data konafb_devices[] __initdata = {
+	{
+		.dispdrv_name  = "ILI9486", 
+		.dispdrv_entry = DISPDRV_ili9486_GetFuncTable,
+		.parms = {
+			.w0 = {
+				.bits = { 
+					.boot_mode  = 0,  	  
+					.bus_type   = RHEA_BUS_SMI,  
+					.bus_no     = RHEA_BUS_0,
+					.bus_ch     = RHEA_BUS_CH_1,
+					.bus_width  = RHEA_BUS_WIDTH_16,
+					.te_input   = RHEA_TE_IN_0_LCD,
+					.col_mode_i = RHEA_CM_I_XRGB888,	  
+					.col_mode_o = RHEA_CM_O_RGB888, 
+				},	
+			
+			},
+			.w1 = {
+				.bits = { 
+					.api_rev  = RHEA_LCD_BOOT_API_REV,
+					.lcd_rst0 = 41,  	  
+				}, 
+			},
+		},
+	},
+};
+#endif
 #include "rhea_fb_init.c"
 #endif
 
 void __init board_init(void)
 {
-	gpio_request(122,"uart_sel");
-	gpio_direction_output(122,1);
-	gpio_free(122);
+
 #ifndef CONFIG_KONA_ATAG_DT
 	board_config_default_gpio();
 #endif

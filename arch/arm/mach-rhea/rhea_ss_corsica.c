@@ -70,9 +70,6 @@
 #include <linux/dma-mapping.h>
 #endif
 #include <linux/spi/spi.h>
-#ifdef CONFIG_SPI_AUTHFP
-#include <linux/authfp_dev.h>
-#endif
 #if defined (CONFIG_HAPTIC)
 #include <linux/haptic.h>
 #endif
@@ -104,13 +101,12 @@
 #include <linux/broadcom/bcm_bzhw.h>
 #endif
 
-#if defined(CONFIG_BCMI2CNFC)
-#include <linux/bcmi2cnfc.h>
+#if defined  (CONFIG_SENSORS_BMC150)
+#include <linux/bst_sensor_common.h>
 #endif
 
-
-#if defined(CONFIG_SENSORS_GP2AP002)
-#include <linux/gp2ap002_dev.h>
+#if defined(CONFIG_BCMI2CNFC)
+#include <linux/bcmi2cnfc.h>
 #endif
 
 #if defined  (CONFIG_SENSORS_HSCDTD006A) || defined(CONFIG_SENSORS_HSCDTD008A) 
@@ -120,7 +116,6 @@
 #if defined  (CONFIG_SENSORS_K3DH)
 #include <linux/k3dh_dev.h>
 #endif
-
 
 #ifdef CONFIG_I2C_GPIO
 
@@ -261,7 +256,7 @@ static int synaptics_touchpad_gpio_setup(void *gpio_data, bool configure)
 
 #ifdef CONFIG_BRCM_UNIFIED_DHD_SUPPORT
 
-#include "board-rhea_ss_ivoryss-wifi.h"
+#include "board-rhea_ss_corsica-wifi.h"
 extern int rhea_wifi_status_register(
 		void (*callback)(int card_present, void *dev_id),
 		void *dev_id);
@@ -505,7 +500,7 @@ struct platform_device bcm_kp_device = {
 };
 
 /*
- * Keymap for Ivory board
+ * Keymap for Corsica board
  */
 static struct bcm_keymap newKeymap[] = {
 	{BCM_KEY_ROW_0, BCM_KEY_COL_0, "unused", 0},
@@ -967,13 +962,24 @@ static struct i2c_board_info __initdata synaptics_i2c_devices[] = {
 #endif /* TM2303 */
 #endif /* RMI4_I2C */
 
+#if defined  (CONFIG_SENSORS_BMC150)
+static struct bosch_sensor_specific bss_bma2x2 = {
+	.name = "bma2x2" ,
+        .place = 5,
+};
+
+static struct bosch_sensor_specific bss_bmm050 = {
+	.name = "bmm050" ,
+        .place = 5,
+};
+#endif
 
 #if defined  (CONFIG_SENSORS_K3DH)
 static struct k3dh_platform_data k3dh_platform_data = {	
 	.orientation = {	
 	1, 0, 0,
-	0, 1, 0,		
-	0, 0, 1},
+	0, -1, 0,		
+	0, 0, -1},
 };
 #endif
 
@@ -986,18 +992,11 @@ static struct hscd_i2c_platform_data hscd_i2c_platform_data = {
 };
 #endif
 
-#if defined  (CONFIG_SENSORS_GP2AP002)
-#define PROXI_INT_GPIO_PIN      (122)
-static struct gp2ap002_platform_data gp2ap002_platform_data = {
-	.irq_gpio = PROXI_INT_GPIO_PIN,
-	.irq = gpio_to_irq(PROXI_INT_GPIO_PIN),        
-};
-#endif
 
 static struct i2c_board_info __initdata rhea_ss_i2cgpio1_board_info[] = {
 
 #if defined  (CONFIG_SENSORS_K3DH)
-	{
+	{		
 		I2C_BOARD_INFO("k3dh", 0x19),
 		.platform_data = &k3dh_platform_data,                        	
 	},
@@ -1007,13 +1006,6 @@ static struct i2c_board_info __initdata rhea_ss_i2cgpio1_board_info[] = {
 	{
 		I2C_BOARD_INFO("hscd_i2c", 0x0c),
 		.platform_data = &hscd_i2c_platform_data,
-	},
- #endif
-	
-#if defined  (CONFIG_SENSORS_GP2AP002)
-	{
-		I2C_BOARD_INFO("gp2ap002", 0x44),
-		.platform_data = &gp2ap002_platform_data,            
 	},
 #endif
 
@@ -1214,11 +1206,11 @@ static struct i2c_board_info __initdata mpu6050_info[] =
 static unsigned int  rheass_button_adc_values [3][2] = 
 {
 	/* SEND/END Min, Max*/
-        {0,     99},
+        {0,     120},
 	/* Volume Up  Min, Max*/
-        {100,    240},
+        {121,    260},
 	/* Volue Down Min, Max*/
-        {241,   500},
+        {261,   520},
 };
 
 static struct kona_headset_pd headset_data = {
@@ -1751,7 +1743,7 @@ static struct platform_device tps728xx_vc_device_sim2 = {
 #if (defined(CONFIG_BCM_RFKILL) || defined(CONFIG_BCM_RFKILL_MODULE))
 
 #define BCMBT_VREG_GPIO       (100)
-#define BCMBT_N_RESET_GPIO    (-1)
+#define BCMBT_N_RESET_GPIO    (92)
 #define BCMBT_AUX0_GPIO        (-1)   /* clk32 */
 #define BCMBT_AUX1_GPIO        (-1)    /* UARTB_SEL */
 
@@ -1838,7 +1830,7 @@ static struct platform_device gps_hostwake= {
 
 #ifdef CONFIG_SOC_CAMERA
 //@HW
-#define SR300PC20_I2C_ADDRESS (0x40>>1) //sensor address in 2-wire serial bus(write) 
+#define SR200PC20M_I2C_ADDRESS (0x40>>1) //sensor address in 2-wire serial bus(write) 
 //#define SR030PC50_I2C_ADDRESS (0x60>>1)
 
 
@@ -1847,64 +1839,28 @@ static struct platform_device gps_hostwake= {
 
 static struct i2c_board_info rhea_i2c_camera[] = {
 	{
-		I2C_BOARD_INFO("camdrv_ss", SR300PC20_I2C_ADDRESS),
+		I2C_BOARD_INFO("camdrv_ss", SR200PC20M_I2C_ADDRESS),
 	},
 };
-#if 0 // NO SUB CAMERA on IVORY
+/*
 static struct i2c_board_info rhea_i2c_camera_sub[] = {
 	{
 		I2C_BOARD_INFO("camdrv_ss_sub", SR030PC50_I2C_ADDRESS),
 	},
 };
-
-static int rhea_camera_power_sub(struct device *dev, int on)
-{
-	if(!camdrv_ss_power(1,(bool)on))
-	{
-		printk("%s,camdrv_ss_power failed for subcam !!!\n",__func__);
-		return -1;
-	}
-	
-	return 0;
-		}
-#endif
+*/
 
 static int rhea_camera_power(struct device *dev, int on)
-		{
-	static struct pi_mgr_dfs_node unicam_dfs_node;
-	int ret;
-
-	printk(KERN_INFO "rhea_camera_power %d %d\n", on, unicam_dfs_node.valid);
-
-	if (!unicam_dfs_node.valid) {
-		ret = pi_mgr_dfs_add_request(&unicam_dfs_node, "unicam", PI_MGR_PI_ID_MM,
-			PI_MGR_DFS_MIN_VALUE);
-		if (ret) {
-			printk(KERN_ERR "%s: failed to register PI DFS request\n", __func__);
-			return -1;
-		}
+{
+		
+	printk("rhea_camera_power %d\n",on);
+	if(!camdrv_ss_power(0,(bool)on))
+	{
+		  printk("%s,camdrv_ss_power failed for MAIN CAM!! \n", __func__);
+		return -1;
 	}
+	return 0;
 
-	if (on) {
-		if (pi_mgr_dfs_request_update(&unicam_dfs_node, PI_OPP_TURBO)) {
-			printk(KERN_ERR "%s:failed to update dfs request for unicam\n", __func__);
-			return -1;
-		}
-	}
-
-	if (!camdrv_ss_power(0, (bool)on)) {
-		printk(KERN_ERR "%s,camdrv_ss_power failed for MAIN CAM!!\n", __func__);
-			return -1;
-		}
-
-	if (!on) {
-		if (pi_mgr_dfs_request_update(&unicam_dfs_node,
-					      PI_MGR_DFS_MIN_VALUE)) {
-			printk(KERN_ERR "%s: failed to update dfs request for unicam\n", __func__);
-		}
-	}
-
-    return 0;
 }
 
 static int rhea_camera_reset(struct device *dev)
@@ -1913,15 +1869,8 @@ static int rhea_camera_reset(struct device *dev)
 	
 	return 0;
 }
-static int rhea_camera_reset_sub(struct device *dev)
-{
-	/* reset the camera gpio */
 	
-	return 0;
-}
-
-
-static struct v4l2_subdev_sensor_interface_parms sr300pc20_if_params = {
+static struct v4l2_subdev_sensor_interface_parms sr200pc20m_if_params = {
 	.if_type = V4L2_SUBDEV_SENSOR_SERIAL,
 	.if_mode = V4L2_SUBDEV_SENSOR_MODE_SERIAL_CSI2,
 	.orientation = V4L2_SUBDEV_SENSOR_ORIENT_90,
@@ -1937,7 +1886,7 @@ static struct v4l2_subdev_sensor_interface_parms sr300pc20_if_params = {
 };
 
 
-static struct soc_camera_link iclink_sr300pc20 = {
+static struct soc_camera_link iclink_sr200pc20m = {
 	.bus_id		= 0,
 	
 	.board_info	= &rhea_i2c_camera[0],
@@ -1945,14 +1894,14 @@ static struct soc_camera_link iclink_sr300pc20 = {
 	.module_name	= "camdrv_ss",
 	.power		= &rhea_camera_power,
 	.reset		= &rhea_camera_reset,
-	.priv		= &sr300pc20_if_params,
+	.priv		= &sr200pc20m_if_params,
 };
 
 static struct platform_device rhea_camera = {
 	.name	= "soc-camera-pdrv",
 	.id		= 0,
 	.dev	= {
-		.platform_data = &iclink_sr300pc20,
+		.platform_data = &iclink_sr200pc20m,
 	},
 };
 #endif // CONFIG_SOC_CAMERA
@@ -2055,7 +2004,7 @@ static struct platform_device *rhea_ray_plat_devices[] __initdata = {
 #ifdef CONFIG_SOC_CAMERA
 	&rhea_camera,
 #endif
-#if 0 // NO SUB CAMERA on IVORY
+#if 0 // NO SUB CAMERA on Crosica
 	&rhea_camera_sub,
 #endif
 
@@ -2627,7 +2576,7 @@ void __init board_map_io(void)
 late_initcall(rhea_ray_add_lateInit_devices);
 
 
-MACHINE_START(RHEA, "rhea_ss_ivoryss")
+MACHINE_START(RHEA, "rhea_ss_corsica")
 	.map_io = board_map_io,
 	.init_irq = kona_init_irq,
 	.timer  = &kona_timer,

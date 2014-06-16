@@ -590,7 +590,7 @@ static struct regulator_init_data bcm59039_asr_nm2_data = {
             .max_uV = 2900000,
             .valid_ops_mask =
             REGULATOR_CHANGE_MODE | REGULATOR_CHANGE_VOLTAGE,
-            .always_on = 1,
+            .always_on = 0,
             },
     .num_consumer_supplies = ARRAY_SIZE(asr_nm2_supply),
     .consumer_supplies = asr_nm2_supply,

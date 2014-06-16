@@ -145,6 +145,11 @@ config MACH_RHEA_SS_NEVISP
         help
           Support for the Broadcom Rhea SS NevisP board.
 
+config MACH_RHEA_SS_CORSICA
+        bool "Support Broadcom Rhea SS Corsica board"
+        help
+          Support for the Broadcom Rhea SS Corsica board.
+
 endchoice
 
 config MACH_RHEA_SS_ZANIN_05
@@ -378,6 +383,12 @@ config 59055_SIM_EM_SHDWN
 	default n
 	help
 	   For 59055 supported emergency sim shutdown
+
+config MACH_RHEA_SS_EMMC_EXTLDO
+	bool "Enable SS EMMC external LDO"
+	default y
+	help
+	   For SS EMMC memory external LDO
 
 config MACH_ZANIN_CHN_OPEN
 	bool "ZANIN_CHN_OPEN"

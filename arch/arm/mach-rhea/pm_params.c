@@ -173,7 +173,7 @@ extern int __jira_wa_enabled(u32 jira)
 #define START_CMD			0xb
 #define START_DELAY			6
 #define WRITE_DELAY			9
-#define VLT_CHANGE_DELAY		0x25
+#define VLT_CHANGE_DELAY		0x80    // from 0x25 for Dialog PMU
 #else /* FS mode */
 #define START_CMD			0x3
 #define START_DELAY			0x10
@@ -413,7 +413,7 @@ static const u32 a9_freq_list[A9_FREQ_MAX] = {
 };
 
 
-int pm_init_pmu_sr_vlt_map_table(int silicon_type, int freq_id)
+int pm_init_pmu_sr_vlt_map_table(u32 *silicon_type, int *freq_id)
 {
 #define RATE_ADJ 10
 	struct clk *a9_pll_chnl1;
@@ -426,8 +426,6 @@ int pm_init_pmu_sr_vlt_map_table(int silicon_type, int freq_id)
 	BUG_ON(IS_ERR_OR_NULL(a9_pll_chnl1));
 
 	rate = clk_get_rate(a9_pll_chnl1);
-	pr_info("%s : rate = %lu, silicon_type = %d\n",
-		__func__, rate, silicon_type);
 	rate += RATE_ADJ;
 
 	for (inx = A9_FREQ_MAX - 1; inx >= 0; inx--) {
@@ -452,12 +450,18 @@ int pm_init_pmu_sr_vlt_map_table(int silicon_type, int freq_id)
 	 * otherwise assume slow silicon
 	 */
 
-	if ((freq_id < 0) && (inx == A9_FREQ_1_GHZ))
-		silicon_type = SILICON_TYPE_TYPICAL;
-	else if ((freq_id >= 0) && (freq_id < inx))
+	if (((*freq_id) < 0) && (inx == A9_FREQ_1_GHZ)) {
+		pr_info("FREQ: 1GHz, upgrading silicon type to TYPICAL");
+		*silicon_type = SILICON_TYPE_TYPICAL;
+		*freq_id = inx;
+	} else if (((*freq_id) >= 0) && ((*freq_id) < inx))
 		pr_info("%s: Wrong A9 PLL configuration!!\n", __func__);
 
-	vlt_table = (u8 *) bcmpmu_get_sr_vlt_table(0, (u32) inx, silicon_type);
+	pr_info("%s : rate = %lu, silicon_type = %d\n",
+			__func__, rate, *silicon_type);
+
+	vlt_table = (u8 *) bcmpmu_get_sr_vlt_table(0, (u32) inx,
+			*silicon_type);
 	for (inx = 0; inx < SR_VLT_LUT_SIZE; inx++)
 		csr_vlt_table[inx] = vlt_table[inx];
 	return pwr_mgr_pm_i2c_var_data_write(vlt_table, SR_VLT_LUT_SIZE);

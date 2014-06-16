@@ -178,6 +178,7 @@ enum {
 	CMD_DORMANT = 'd',
 	CMD_DISPLAY_STATS = 's',
 	CMD_FORCE_SLEEP = 'f',
+	CMD_PRINT_PM_LOG_BUF = 'p',
 };
 
 static void cmd_show_usage(void)
@@ -209,11 +210,18 @@ int get_force_sleep_state(void)
 }
 
 extern void uas_jig_force_sleep(void);
+#if defined(CONFIG_MACH_RHEA_SS_NEVIS) || defined(CONFIG_MACH_RHEA_SS_NEVISP)
+extern void fsa9480_force_sleep(void);
+#endif
 
+static void cmd_print_pm_log_buf(const char *p)
+{
+	print_pm_log();
+}
 
 static void cmd_force_sleep(const char *p)
 {
-#if defined(CONFIG_MACH_RHEA_SS_LUCAS) || defined(CONFIG_MACH_RHEA_SS_ZANIN) || defined(CONFIG_MACH_RHEA_SS_IVORY) || defined(CONFIG_MACH_RHEA_SS_NEVIS) || defined(CONFIG_MACH_RHEA_SS_NEVISP) || defined(CONFIG_MACH_RHEA_SS_IVORYSS) || defined(CONFIG_MACH_RHEA_SS_CORIPLUS)
+#if defined(CONFIG_MACH_RHEA_SS_LUCAS) || defined(CONFIG_MACH_RHEA_SS_ZANIN) || defined(CONFIG_MACH_RHEA_SS_IVORY) || defined(CONFIG_MACH_RHEA_SS_CORSICA) || defined(CONFIG_MACH_RHEA_SS_NEVIS) || defined(CONFIG_MACH_RHEA_SS_NEVISP) || defined(CONFIG_MACH_RHEA_SS_IVORYSS) || defined(CONFIG_MACH_RHEA_SS_CORIPLUS)
 	//LCD backlight control
 	gpio_set_value(95, 0);	
 #endif
@@ -231,6 +239,9 @@ static void cmd_force_sleep(const char *p)
 	}
 
 	uas_jig_force_sleep();
+#if defined(CONFIG_MACH_RHEA_SS_NEVIS) || defined(CONFIG_MACH_RHEA_SS_NEVISP)
+	fsa9480_force_sleep();
+#endif
 
 #ifdef CONFIG_MACH_RHEA_SS_COMMON
 	chal_aci_block_ctrl(NULL, CHAL_ACI_BLOCK_ACTION_INTERRUPT_DISABLE, CHAL_ACI_BLOCK_COMP);
@@ -292,6 +303,9 @@ static int param_set_debug(const char *val, const struct kernel_param *kp)
 		break;
 	case CMD_FORCE_SLEEP:
 		cmd_force_sleep(p);
+		break;
+	case CMD_PRINT_PM_LOG_BUF:
+		cmd_print_pm_log_buf(p);
 		break;
 	case CMD_SHOW_HELP: /* Fall-through */
 	default:

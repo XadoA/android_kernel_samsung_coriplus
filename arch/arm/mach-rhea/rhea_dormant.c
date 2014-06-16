@@ -49,8 +49,6 @@ u32 dormant_base_pa;
 static u32 addnl_save_reg_list[][2] = {
 	{(KONA_PROC_CLK_VA + KPROC_CLK_MGR_REG_PL310_DIV_OFFSET), 0},
 	{(KONA_PROC_CLK_VA + KPROC_CLK_MGR_REG_PL310_TRIGGER_OFFSET), 0},
-	{(KONA_PROC_CLK_VA + KPROC_CLK_MGR_REG_POLICY_FREQ_OFFSET), 0},
-	{(KONA_PROC_CLK_VA + KPROC_CLK_MGR_REG_POLICY_CTL_OFFSET), 0},
 	{(KONA_PROC_CLK_VA + KPROC_CLK_MGR_REG_POLICY0_MASK_OFFSET), 0},
 	{(KONA_PROC_CLK_VA + KPROC_CLK_MGR_REG_POLICY1_MASK_OFFSET), 0},
 	{(KONA_PROC_CLK_VA + KPROC_CLK_MGR_REG_POLICY2_MASK_OFFSET), 0},
@@ -88,6 +86,8 @@ static u32 addnl_save_reg_list[][2] = {
 	{(KONA_PROC_CLK_VA + KPROC_CLK_MGR_REG_APB_CLKGATE_DBG1_OFFSET), 0},
 	{(KONA_PROC_CLK_VA + KPROC_CLK_MGR_REG_CLKMON_OFFSET), 0},
 	{(KONA_PROC_CLK_VA + KPROC_CLK_MGR_REG_POLICY_DBG_OFFSET), 0},
+	{(KONA_PROC_CLK_VA + KPROC_CLK_MGR_REG_POLICY_FREQ_OFFSET), 0},
+	{(KONA_PROC_CLK_VA + KPROC_CLK_MGR_REG_POLICY_CTL_OFFSET), 0},
 	{(KONA_PROC_CLK_VA + KPROC_CLK_MGR_REG_TGTMASK_DBG1_OFFSET), 0},
 	{(KONA_AXITRACE1_VA + AXITP1_ATM_CONFIG_OFFSET), 0},
 	{(KONA_AXITRACE1_VA + AXITP1_ATM_OUTIDS_OFFSET), 0},
@@ -460,24 +460,16 @@ static void dormant_save_addnl_reg(void)
 static void dormant_restore_addnl_reg(void)
 {
 	int i;
-	u32 reg_val, val1, val2;
+	u32 reg_val, reg_val1, val1, val2;
 	u32 insurance = 0;
 
 	/* Allow write access to the CCU registers */
 	writel_relaxed(0xA5A501, (KONA_PROC_CLK_VA +
 	       KPROC_CLK_MGR_REG_WR_ACCESS_OFFSET));
 
-	for (i = 0; i < ARRAY_SIZE(addnl_save_reg_list); i++) {
-		/* Restore the saved data */
-		writel_relaxed(addnl_save_reg_list[i][1],
-			       addnl_save_reg_list[i][0]);
-
-		if (addnl_save_reg_list[i][0] == (KONA_PROC_CLK_VA +
-		    KPROC_CLK_MGR_REG_TGTMASK_DBG1_OFFSET)) {
-
-			/* Finished restoring all the A9 CCU registers
-			 * lock the state machine so writing the GO bit
-			 * would not cause issues with the state machine
+	/* Disable A9 CCU policy engine before restoring registers.
+	 * Ensures that writing values onto policy registers doesnt
+	 * take any immediate effect while restoring.
 			 */
 			writel_relaxed(readl(KONA_PROC_CLK_VA +
 			       KPROC_CLK_MGR_REG_LVM_EN_OFFSET) |
@@ -491,18 +483,22 @@ static void dormant_restore_addnl_reg(void)
 				reg_val = readl(KONA_PROC_CLK_VA +
 					KPROC_CLK_MGR_REG_LVM_EN_OFFSET);
 				insurance++;
-			} while ((reg_val &
-			KPROC_CLK_MGR_REG_LVM_EN_POLICY_CONFIG_EN_MASK) &&
+	} while ((reg_val & KPROC_CLK_MGR_REG_LVM_EN_POLICY_CONFIG_EN_MASK) &&
 			insurance < 10000);
 			WARN_ON(insurance >= 10000);
 
-			/* Write the go bit to trigger the frequency change
-			 */
+	for (i = 0; i < ARRAY_SIZE(addnl_save_reg_list); i++) {
+		/* Restore the saved data */
+		writel_relaxed(addnl_save_reg_list[i][1],
+			       addnl_save_reg_list[i][0]);
+
+		/* Write the go bit to trigger the frequency change */
+		if (addnl_save_reg_list[i][0] == (KONA_PROC_CLK_VA +
+		    KPROC_CLK_MGR_REG_TGTMASK_DBG1_OFFSET)) 
 			writel_relaxed(KPROC_CLK_MGR_REG_POLICY_CTL_GO_AC_MASK |
 			       KPROC_CLK_MGR_REG_POLICY_CTL_GO_MASK,
 			       KONA_PROC_CLK_VA +
 			       KPROC_CLK_MGR_REG_POLICY_CTL_OFFSET);
-		}
 	}
 
 	/* Wait until the new frequency takes effect */
@@ -517,6 +513,7 @@ static void dormant_restore_addnl_reg(void)
 			  KPROC_CLK_MGR_REG_POLICY_CTL_OFFSET) &
 			  KPROC_CLK_MGR_REG_POLICY_CTL_GO_MASK;
 	} while (val1 | val2);
+	
 	/* Lock CCU registers */
 	writel_relaxed(0xA5A500, (KONA_PROC_CLK_VA +
 	       KPROC_CLK_MGR_REG_WR_ACCESS_OFFSET));

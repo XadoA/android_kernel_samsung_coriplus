@@ -154,15 +154,6 @@
 #define PLLDSI_OFFEST_CONFIG    0x0
 #define PLL1_OFFSET_CONFIG	0xBFFFF
 
-/*supported A9 freqs*/
-enum {
-	A9_FREQ_700_MHZ,
-	A9_FREQ_800_MHZ,
-	A9_FREQ_850_MHZ,
-	A9_FREQ_1_GHZ,
-	A9_FREQ_MAX
-};
-
 #ifdef CONFIG_KONA_POWER_MGR
 struct pwrmgr_init_param {
 	struct i2c_cmd *cmd_buf;
@@ -198,7 +189,6 @@ extern const u8 *bcmpmu_get_sr_vlt_table(int sr, u32 freq_inx,
 			u32 silicon_type);
 extern int __jira_wa_enabled(u32 jira);
 extern int __init rhea_pm_params_init(void);
-extern int pm_init_pmu_sr_vlt_map_table(int silicon_type, int freq_id);
+extern int pm_init_pmu_sr_vlt_map_table(u32 *silicon_type, int *freq_id);
 
 #endif	/*__PM_PARAMS_H__*/
-

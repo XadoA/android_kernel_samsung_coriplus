@@ -27,13 +27,7 @@
 #include <linux/io.h>
 #include <linux/uaccess.h>
 #include <linux/i2c.h>
-#ifdef CONFIG_MFD_D2083
-#include <linux/d2083/core.h>
-#include <linux/d2083/pmic.h>
-#include <linux/d2083/d2083_battery.h>
-#else
 #include <linux/mfd/bcmpmu.h>
-#endif
 #include <linux/broadcom/bcmpmu-ponkey.h>
 #ifdef CONFIG_KONA_AVS
 #include <plat/kona_avs.h>
@@ -42,25 +36,14 @@
 #if defined(CONFIG_SEC_CHARGING_FEATURE)
 #include <linux/spa_power.h>
 #endif
-#ifdef CONFIG_MFD_D2083
-#define PMU_DEVICE_I2C_ADDR	0x49
-#else
+
 #define PMU_DEVICE_I2C_ADDR	0x08
 #define PMU_DEVICE_I2C_ADDR1	0x0C
-#endif
 #define PMU_DEVICE_INT_GPIO	29
 #define PMU_DEVICE_I2C_BUSNO 2
 
-#define CONFIG_FSA9480_MICROUSB				// TEST config
-
-#if defined(CONFIG_FSA9480_MICROUSB)
-#include <linux/fsa9480.h>
-#endif
 
 
-static int vlt_tbl_init;
-
-#if !defined(CONFIG_MFD_D2083)
 static struct bcmpmu_rw_data __initdata register_init_data[] = {
 	{.map = 0, .addr = 0x01, .val = 0x00, .mask = 0x01},
 
@@ -132,8 +115,8 @@ static struct bcmpmu_rw_data __initdata register_init_data[] = {
 	{.map = 0, .addr = 0xD2, .val = 0x13, .mask = 0xFF},
 #endif
 	{.map = 0, .addr = 0xD0, .val = 0x15, .mask = 0xFF},
-        {.map = 0, .addr = 0xD1, .val = 0x15, .mask = 0xFF},
-        {.map = 0, .addr = 0xD2, .val = 0x15, .mask = 0xFF},
+	{.map = 0, .addr = 0xD1, .val = 0x15, .mask = 0xFF},
+	{.map = 0, .addr = 0xD2, .val = 0x15, .mask = 0xFF},
 
 	/*Init CSR LPM  to 0.9 V
 	CSR NM2 to 1.22V
@@ -168,13 +151,14 @@ static struct bcmpmu_rw_data __initdata register_init_data[] = {
 	/*FGOPMODCTRL, Set bits 4, 1 for FG Sync. Mode*/
 	{.map = 1, .addr = 0x42, .val = 0x15, .mask = 0xFF},
 	{.map = 1, .addr = 0x43, .val = 0x02, .mask = 0xFF},
+
 };
 
 static struct bcmpmu_temp_map batt_temp_map[] = {
 	/*
 	* This table is hardware dependent and need to get from platform team
 	*/
-	/*
+ 	/*
    * { adc readings 10-bits,  temperature in Celsius }
 	*/
 	{932, -400},			/* -40 C */
@@ -289,8 +273,9 @@ static struct regulator_init_data bcm59039_hv3ldo_data = {
 __weak struct regulator_consumer_supply hv4_supply[] = {
 	{.supply = "hv4"},
 	{.supply = "2v9_vibra"},
-	{.supply = "dummy"}, /* Add a dummy variable to ensure we can use an array of 3 in rhea_ray.
-		  A hack at best to ensure we redefine the supply in board file. */
+	{.supply = "dummy"},
+	/* Add a dummy variable to ensure we can use an array of 3 in rhea_ray.
+	A hack at best to ensure we redefine the supply in board file. */
 };
 static struct regulator_init_data bcm59039_hv4ldo_data = {
 	.constraints = {
@@ -651,7 +636,8 @@ struct bcmpmu_regulator_init_data bcm59039_regulators[BCMPMU_REGULATOR_MAX] = {
 		BCMPMU_REGULATOR_HV4LDO, &bcm59039_hv4ldo_data, 0xAA, BCMPMU_REGL_ON_IN_DSM
 	},
 	[BCMPMU_REGULATOR_HV5LDO] = {
-		BCMPMU_REGULATOR_HV5LDO, &bcm59039_hv5ldo_data, 0x00, BCMPMU_REGL_LPM_IN_DSM  /* 0x01 -> 0x00 */
+		BCMPMU_REGULATOR_HV5LDO, &bcm59039_hv5ldo_data,
+		0x00, BCMPMU_REGL_LPM_IN_DSM  /* 0x01 -> 0x00 */
 	},
 	[BCMPMU_REGULATOR_HV6LDO] = {		// VDD_SDXC(BB-SDIO)
 		//BCMPMU_REGULATOR_HV6LDO, &bcm59039_hv6ldo_data, 0x11, BCMPMU_REGL_LPM_IN_DSM
@@ -785,16 +771,12 @@ static struct platform_device *bcmpmu_client_devices[] = {
 #endif
 };
 
-
 static int bcmpmu_exit_platform_hw(struct bcmpmu *bcmpmu)
 {
 	pr_info("REG: pmu_init_platform_hw called\n");
 	return 0;
 }
-#endif	// CONFIG_MFD_D2083
 
-
-#if !defined(CONFIG_MFD_D2083)
 static struct i2c_board_info pmu_info_map1 = {
 	I2C_BOARD_INFO("bcmpmu_map1", PMU_DEVICE_I2C_ADDR1),
 };
@@ -817,11 +799,8 @@ static struct bcmpmu_charge_zone chrg_zone[] = {
 
 static struct bcmpmu_voltcap_map batt_voltcap_map[] = {
 	/*
-	* Battery data for 1300mAH re-measured by Minal 20120717
-    * align zero crossing @ 3400mV complying to SS spec
-	*/
-	/*
-	* volt capacity
+	* align zero crossing @ 3400mV complying to SS spec
+	* volt capacity from Domitille 7/10
 	*/
 	{4159, 100},
 	{4107, 95},
@@ -854,12 +833,34 @@ static struct bcmpmu_voltcap_map batt_voltcap_map[] = {
 	{3400, 0},
 };
 
+static struct bcmpmu_cutoff_map cutoff_cal_map[] = {
+		{3470, 2, 0},
+		{3425, 1, 0},
+		{3400, 0, 0},
+};
+
+static struct bcmpmu_currcap_map eoc_cal_map[] = {
+		{290, 90, 0},
+		{270, 91, 0},
+		{250, 92, 0},
+		{228, 93, 0},
+		{208, 94, 0},
+		{185, 95, 0},
+		{165, 96, 0},
+		{145, 97, 0},
+		{125, 98, 0},
+		{105, 99, 0},
+		{85, 100, 0},
+		{0, 100, 0},
+};
+
+
 static int bcmpmu_init_platform_hw(struct bcmpmu *);
 
 
 static struct bcmpmu_fg_zone fg_zone[FG_TMP_ZONE_MAX+1] = {
 /* This table is default data, the real data from board file or device tree*/
-/* Battery data for 1200mAH re-measured by Minal 20120601 */
+/* Battery data for VBAT 1300mAH by Domitille 7/10 */
 	{.temp = -200,
 	 .reset = 0, .fct = 225, .guardband = 100,
 	 .esr_vl_lvl = 3291, .esr_vm_lvl = 3388, .esr_vh_lvl = 3588,
@@ -927,7 +928,7 @@ static struct bcmpmu_fg_zone fg_zone[FG_TMP_ZONE_MAX+1] = {
 	 .reset = 0, .fct = 1000, .guardband = 30,
 	 .esr_vl_lvl = 3803, .esr_vm_lvl = 3993, .esr_vh_lvl = 4033,
 	 .esr_vl = 186, .esr_vl_slope = -254, .esr_vl_offset = 1153,
-	 .esr_vm = 172, .esr_vm_slope = -560, .esr_vm_offset = 2137,
+	 .esr_vm = 172, .esr_vm_slope = -560, .esr_vm_offset = 2317,
 	 .esr_vh = 184, .esr_vh_slope = 1084, .esr_vh_offset = -4248,
 	 .esr_vf = 183, .esr_vf_slope = -506, .esr_vf_offset = 2164,
 	 .vcmap = &batt_voltcap_map[0],
@@ -936,7 +937,7 @@ static struct bcmpmu_fg_zone fg_zone[FG_TMP_ZONE_MAX+1] = {
 	 .reset = 0, .fct = 1000, .guardband = 30,
 	 .esr_vl_lvl = 3803, .esr_vm_lvl = 3993, .esr_vh_lvl = 4033,
 	 .esr_vl = 186, .esr_vl_slope = -254, .esr_vl_offset = 1153,
-	 .esr_vm = 172, .esr_vm_slope = -560, .esr_vm_offset = 2137,
+	 .esr_vm = 172, .esr_vm_slope = -560, .esr_vm_offset = 2317,
 	 .esr_vh = 184, .esr_vh_slope = 1084, .esr_vh_offset = -4248,
 	 .esr_vf = 183, .esr_vf_slope = -506, .esr_vf_offset = 2164,
 	 .vcmap = &batt_voltcap_map[0],
@@ -944,594 +945,9 @@ static struct bcmpmu_fg_zone fg_zone[FG_TMP_ZONE_MAX+1] = {
 };
 
 #ifdef CONFIG_CHARGER_BCMPMU_SPA
-static void notify_spa(enum bcmpmu_event_t event, int data)
-{
-	printk(KERN_INFO "%s event=%d, data=%d\n",
-		__func__, event, data);
-
-	switch (event) {
-	case BCMPMU_CHRGR_EVENT_CHGR_DETECTION:
-		spa_event_handler(SPA_EVT_CHARGER, data);
-		break;
-	case BCMPMU_CHRGR_EVENT_MBTEMP:
-		spa_event_handler(SPA_EVT_TEMP, data);
-		break;
-	case BCMPMU_CHRGR_EVENT_MBOV:
-		spa_event_handler(SPA_EVT_OVP, data);
-		break;
-	case BCMPMU_CHRGR_EVENT_USBOV:
-		spa_event_handler(SPA_EVT_OVP, data);
-		break;
-	case BCMPMU_CHRGR_EVENT_EOC:
-		spa_event_handler(SPA_EVT_EOC, 0);
-		break;
-	case BCMPMU_CHRGR_EVENT_CAPACITY:
-		spa_event_handler(SPA_EVT_CAPACITY, (void *)data);
-		break;
-	default:
-		break;
-	}
-}
-#endif
-#endif	// CONFIG_MFD_D2083
-
-#ifdef CONFIG_MFD_D2083
-#define mV_to_uV(v)                 ((v) * 1000)
-#define uV_to_mV(v)                 ((v) / 1000)
-#define MAX_MILLI_VOLT              (3300)
-
-
-static struct regulator_consumer_supply d2083_buck1_supplies[] = {
-	REGULATOR_SUPPLY("csr_nm_uc", NULL),
-	REGULATOR_SUPPLY("csr_nm2_uc", NULL),
-	REGULATOR_SUPPLY("csr_lpm_uc", NULL),
-};
-
-static struct regulator_init_data d2083_buck1 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_BUCK12_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_BUCK12_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_MODE,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 1,
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_buck1_supplies),
-	.consumer_supplies = d2083_buck1_supplies,
-};
-
-
-static struct regulator_consumer_supply d2083_buck2_supplies[] = {
-	REGULATOR_SUPPLY("iosr_nm_uc", NULL),
-	REGULATOR_SUPPLY("iosr_nm2_uc", NULL),
-	REGULATOR_SUPPLY("iosr_lpm_uc", NULL),
-};
-
-static struct regulator_init_data d2083_buck2 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_BUCK12_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_BUCK12_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_MODE,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 1,
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_buck2_supplies),
-	.consumer_supplies = d2083_buck2_supplies,
-};
-
-
-static struct regulator_consumer_supply d2083_buck3_supplies[] = {
-	REGULATOR_SUPPLY("sdsr_nm_uc", NULL),
-	REGULATOR_SUPPLY("sdsr_nm2_uc", NULL),
-	REGULATOR_SUPPLY("sdsr_lpm_uc", NULL),
-};
-
-static struct regulator_init_data d2083_buck3 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_BUCK3_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_BUCK3_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_MODE,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 1,
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_buck3_supplies),
-	.consumer_supplies = d2083_buck3_supplies,
-};
-
-static struct regulator_consumer_supply d2083_buck4_supplies[] = {
-	REGULATOR_SUPPLY("buck4", NULL),
-};
-
-static struct regulator_init_data d2083_buck4 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_BUCK4_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_BUCK4_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_MODE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 1,
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_buck4_supplies),
-	.consumer_supplies = d2083_buck4_supplies,
-};
-
-
-// LDO
-__weak struct regulator_consumer_supply d2083_ldo1_supplies[] = {
-	REGULATOR_SUPPLY("ldo1", NULL),	// Not used
-};
-
-static struct regulator_init_data d2083_ldo1 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 0,
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo1_supplies),
-	.consumer_supplies = d2083_ldo1_supplies,
-};
-
-__weak struct regulator_consumer_supply d2083_ldo2_supplies[] = {
-	REGULATOR_SUPPLY("rf", NULL),	// VRF_2.7v
-};
-
-static struct regulator_init_data d2083_ldo2 = {
-	.constraints = {
-		.min_uV = 2700000,
-		.max_uV = 2700000,
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 1,
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo2_supplies),
-	.consumer_supplies = d2083_ldo2_supplies,
-};
-
-
-__weak struct regulator_consumer_supply d2083_ldo3_supplies[] = {
-	REGULATOR_SUPPLY("hv8", NULL),	// VDD_SENSOR_3.0V
-};
-
-static struct regulator_init_data d2083_ldo3 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 1,	// VDD_SENSOR_3.0V
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo3_supplies),
-	.consumer_supplies = d2083_ldo3_supplies,
-};
-
-__weak struct regulator_consumer_supply d2083_ldo4_supplies[] = {
-	REGULATOR_SUPPLY("hv1", NULL),	// VDD_AUD_2.9V
-	REGULATOR_SUPPLY("micbias", NULL),
-};
-
-static struct regulator_init_data d2083_ldo4 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS | REGULATOR_CHANGE_MODE,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL | REGULATOR_MODE_IDLE | REGULATOR_MODE_STANDBY,
-		.always_on = 1,	// VDD_AUD_2.9V
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo4_supplies),
-	.consumer_supplies = d2083_ldo4_supplies,
-};
-
-__weak struct regulator_consumer_supply d2083_ldo5_supplies[] = {
-	REGULATOR_SUPPLY("hv2ldo_uc", NULL),	// VDD_USB_3.3V
-};
-
-static struct regulator_init_data d2083_ldo5 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 1,
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo5_supplies),
-	.consumer_supplies = d2083_ldo5_supplies,
-};
-
-
-__weak struct regulator_consumer_supply d2083_ldo6_supplies[] = {
-	REGULATOR_SUPPLY("cam", NULL),	// VCAM_A_2.8V
-};
-
-static struct regulator_init_data d2083_ldo6 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 0,
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo6_supplies),
-	.consumer_supplies = d2083_ldo6_supplies,
-};
-
-__weak struct regulator_consumer_supply d2083_ldo7_supplies[] = {
-	REGULATOR_SUPPLY("hv4", NULL),			// VDD_VIB_3.3V
-	REGULATOR_SUPPLY("2v9_vibra", NULL),
-	REGULATOR_SUPPLY("dummy", NULL),
-};
-
-static struct regulator_init_data d2083_ldo7 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 0,
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo7_supplies),
-	.consumer_supplies = d2083_ldo7_supplies,
-};
-
-
-__weak struct regulator_consumer_supply d2083_ldo8_supplies[] = {
-	REGULATOR_SUPPLY("hv5", NULL),	// VLCD_3.0V
-};
-
-static struct regulator_init_data d2083_ldo8 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 1,	// VLCD_3.0
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo8_supplies),
-	.consumer_supplies = d2083_ldo8_supplies,
-};
-
-__weak struct regulator_consumer_supply d2083_ldo9_supplies[] = {
-	REGULATOR_SUPPLY("vdd_sdxc", NULL),	// VDD_SDXC(BB_SDIO)
-};
-
-static struct regulator_init_data d2083_ldo9 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		//.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 0,	// VDD_SDXC(BB_SDIO)
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo9_supplies),
-	.consumer_supplies = d2083_ldo9_supplies,
-};
-
-__weak struct regulator_consumer_supply d2083_ldo10_supplies[] = {
-	REGULATOR_SUPPLY("vdd_keyled", NULL),	// KEY_LED_3.3V
-};
-
-static struct regulator_init_data d2083_ldo10 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 0,	// TODO: 
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo10_supplies),
-	.consumer_supplies = d2083_ldo10_supplies,
-};
-
-
-__weak struct regulator_consumer_supply d2083_ldo11_supplies[] = {
-	REGULATOR_SUPPLY("sim_vcc", NULL),	// VSIM1_3.0V
-};
-
-static struct regulator_init_data d2083_ldo11 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-
-#ifdef CONFIG_MACH_RHEA_RAY_EDN2X
-		/*TODO: We observed that, on Rhearay HW, interrupt from GPIO expander
-		is not detected by baseband if SIMLDO is disabled. As a temp. workaround
-		we keep SIMLDO ON by default for Rhearay till the issue is root casued*/
-		.always_on = 0,
-#endif
-		.always_on = 0,
-
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo11_supplies),
-	.consumer_supplies = d2083_ldo11_supplies,
-};
-
-
-__weak struct regulator_consumer_supply d2083_ldo12_supplies[] = {
-	REGULATOR_SUPPLY("vcc", NULL),	// VDD_EMMC_2.9V
-};
-
-static struct regulator_init_data d2083_ldo12 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 1,
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo12_supplies),
-	.consumer_supplies = d2083_ldo12_supplies,
-};
-
-__weak struct regulator_consumer_supply d2083_ldo13_supplies[] = {
-	REGULATOR_SUPPLY("hv3", NULL),	// VDD_SDIO_3.0V
-	//REGULATOR_SUPPLY("vdd_sdio", NULL),
-};
-
-static struct regulator_init_data d2083_ldo13 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 0,	// VDD_SDIO_3.0V for T-flash
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo13_supplies),
-	.consumer_supplies = d2083_ldo13_supplies,
-};
-
-__weak struct regulator_consumer_supply d2083_ldo14_supplies[] = {
-	REGULATOR_SUPPLY("ldo14", NULL),	// VTOUCH_1.8V
-};
-
-static struct regulator_init_data d2083_ldo14 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 0,
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo14_supplies),
-	.consumer_supplies = d2083_ldo14_supplies,
-};
-
-__weak struct regulator_consumer_supply d2083_ldo15_supplies[] = {
-	REGULATOR_SUPPLY("ldo15", NULL),	// VTOUCH_3.3V
-};
-
-static struct regulator_init_data d2083_ldo15 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		.always_on = 0,
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo15_supplies),
-	.consumer_supplies = d2083_ldo15_supplies,
-};
-
-__weak struct regulator_consumer_supply d2083_ldo16_supplies[] = {
-	REGULATOR_SUPPLY("hv9", NULL),	// VCAM_IO_1.8V
-};
-
-static struct regulator_init_data d2083_ldo16 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo16_supplies),
-	.consumer_supplies = d2083_ldo16_supplies,
-};
-
-
-__weak struct regulator_consumer_supply d2083_ldo17_supplies[] = {
-	REGULATOR_SUPPLY("ldo17", NULL),	// VCAM_AF_2.8V
-};
-
-static struct regulator_init_data d2083_ldo17 = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldo17_supplies),
-	.consumer_supplies = d2083_ldo17_supplies,
-};
-
-__weak struct regulator_consumer_supply d2083_ldoaud_supplies[] = {
-	REGULATOR_SUPPLY("ldoaud", NULL),	// VLDO_AUD -> d2083 internal use
-};
-
-static struct regulator_init_data d2083_ldoaud = {
-	.constraints = {
-		.min_uV = mV_to_uV(D2083_LDO_VOLT_LOWER),
-		.max_uV = mV_to_uV(D2083_LDO_VOLT_UPPER),
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
-		.valid_modes_mask = REGULATOR_MODE_NORMAL,
-		},
-	.num_consumer_supplies = ARRAY_SIZE(d2083_ldoaud_supplies),
-	.consumer_supplies = d2083_ldoaud_supplies,
-};
-
-
-
-static struct d2083_regl_init_data d2083_regulators_init_data[D2083_NUMBER_OF_REGULATORS] = {
-	[D2083_BUCK_1] = { D2083_BUCK_1,  &d2083_buck1 },
-	[D2083_BUCK_2] = { D2083_BUCK_2,  &d2083_buck2 },
-	[D2083_BUCK_3] = { D2083_BUCK_3,  &d2083_buck3 },
-	[D2083_BUCK_4] = { D2083_BUCK_4,  &d2083_buck4 },
-
-	[D2083_LDO_1]  = { D2083_LDO_1, &d2083_ldo1 },
-	[D2083_LDO_2]  = { D2083_LDO_2, &d2083_ldo2 },
-	[D2083_LDO_3]  = { D2083_LDO_3, &d2083_ldo3 },
-	[D2083_LDO_4]  = { D2083_LDO_4, &d2083_ldo4 },
-	[D2083_LDO_5]  = { D2083_LDO_5, &d2083_ldo5 },
-	[D2083_LDO_6]  = { D2083_LDO_6, &d2083_ldo6 },
-	[D2083_LDO_7]  = { D2083_LDO_7, &d2083_ldo7 },
-	[D2083_LDO_8]  = { D2083_LDO_8, &d2083_ldo8 },
-	[D2083_LDO_9]  = { D2083_LDO_9, &d2083_ldo9 },
-	[D2083_LDO_10] = { D2083_LDO_10, &d2083_ldo10 },
-	[D2083_LDO_11] = { D2083_LDO_11, &d2083_ldo11 },
-	[D2083_LDO_12] = { D2083_LDO_12, &d2083_ldo12 },
-	[D2083_LDO_13] = { D2083_LDO_13, &d2083_ldo13 },
-	[D2083_LDO_14] = { D2083_LDO_14, &d2083_ldo14 },
-	[D2083_LDO_15] = { D2083_LDO_15, &d2083_ldo15 },
-	[D2083_LDO_16] = { D2083_LDO_16, &d2083_ldo16 },
-	[D2083_LDO_17] = { D2083_LDO_17, &d2083_ldo17 },
-	
-	[D2083_LDO_AUD] = { D2083_LDO_AUD, &d2083_ldoaud },
-};
-
-
-
-#if 0
-/* D2041 regulator mapping */
-#define LDO_UNDEFINED	(-1)
-struct regulator_consumer_supply d2083_consumers[D2083_NUMBER_OF_REGULATORS] = {
-	[D2083_LDO_2 ] = REGULATOR_SUPPLY("rf", NULL),
-	[D2083_LDO_6 ] = REGULATOR_SUPPLY("vdd_sdio", NULL),
-	[D2083_LDO_7 ] = REGULATOR_SUPPLY("2v9_vibra", NULL),
-	[D2083_LDO_9 ] = REGULATOR_SUPPLY("vmmc", NULL),
-	[D2083_LDO_11] = REGULATOR_SUPPLY("sim_vcc", NULL),
-	[D2083_LDO_13] = REGULATOR_SUPPLY("cam", NULL),
-	[D2083_BUCK_1] = REGULATOR_SUPPLY("csr_nm2", NULL),
-#if 0	// WS: csr_nm1
-	[D2083_BUCK_1_NM1] = REGULATOR_SUPPLY("csr_nm1", NULL),
-#endif
-	
-};
+static void notify_spa(enum bcmpmu_event_t event, int data);
 #endif
 
-struct d2083_audio_platform_data audio_pdata = {
-	.ina_def_mode =	D2083_IM_FULLY_DIFFERENTIAL,
-	.inb_def_mode = D2083_IM_TWO_SINGLE_ENDED,
-	.ina_def_preampgain = D2083_PREAMP_GAIN_NEG_6DB, //D2083_PREAMP_GAIN_18DB,
-	.inb_def_preampgain = D2083_PREAMP_GAIN_NEG_6DB, //D2083_PREAMP_GAIN_18DB,
-
-	.lhs_def_mixer_in = D2083_MSEL_B1,
-	.rhs_def_mixer_in = D2083_MSEL_B2,
-	.ihf_def_mixer_in = D2083_MSEL_A2,
-
-	.hs_input_path = D2083_INPUTB,
-	.ihf_input_path = D2083_INPUTA,
-};
-
-
-/* Have to syncronize with BCM PMU temperature map.
- * The name of temperature map is "struct bcmpmu_temp_map batt_temp_map[]"
- */
-static struct temp2adc_map bcmpmu_batt_temp_map[] = {
-/*
- * This table is hardware dependent and need to get from platform team
- */
-/*
- * { adc readings 10-bits,  temperature in Celsius }
- */
-	{-400,  932},	/* -40 C */
-	{-350,  900},	/* -35 C */
-	{-300,  869},	/* -30 */
-	{-200,  769},	/* -20 */
-	{-100,  643},    /* -10 */
-	{ -50,  568},	/* -5 */
-	{   0,  509},    /* 0   */
-	{ 100,  382},    /* 10  */
-	{ 200,  275},    /* 20  */
-	{ 250,  231},    /* 25  */
-	{ 300,  196},    /* 30  */
-	{ 400,  138},    /* 40  */
-	{ 500,  95 },    /* 50  */
-	{ 600,  68 },    /* 60  */
-	{ 650,  56 },    /* 65  */
-  	{ 700,  47 },    /* 70  */
-	{ 800,  34 },	/* 80  */
-	{ 850,  28 },	/* 85 C */
-	{ 900,  24 },	/* 90 C */
-	{ 950,  20 },	/* 95 C */
-	{1000,  16 },	/* 100 C */
-};
-
-
-struct d2083_battery_platform_data pbat_pdata = {
-       .battery_technology = POWER_SUPPLY_TECHNOLOGY_LION,
-       .battery_capacity = 1300,
-       .vf_lower    = 250,
-       .vf_upper = 510,
-       .bcmpmu_temp_map = &bcmpmu_batt_temp_map[0],
-       .bcmpmu_temp_map_len = ARRAY_SIZE(bcmpmu_batt_temp_map),
-};
-
-
-struct d2083_platform_data d2083_pdata = {	
-#if defined(CONFIG_KONA_PMU_BSC_HS_1625KHZ)
-	.i2c_pdata = { ADD_I2C_SLAVE_SPEED(BSC_BUS_SPEED_HS_1625KHZ), },
-#else
-	.i2c_pdata = { ADD_I2C_SLAVE_SPEED(BSC_BUS_SPEED_400K), },
-#endif
-	.pbat_platform  = &pbat_pdata,
-	.audio_pdata = &audio_pdata,
-	.regulator_data = &d2083_regulators_init_data[0],
-	.regl_map = {
-		/*
-		 *		Define initial MCTL value of NEVIS with D2083
-		 *	
-		 *	[ LDO ]	0x0 : Off	[ BUCK 2,3,4]	0x0 : Off
-		 *			0x1 : On					0x1 : On
-		 *			0x2 : Sleep - LPM			0x2 : Sleep(Force PFM mode) - LPM
-		 *			0x3 : n/a				0x3 : n/a
-		 *
-		 *	[ BUCK 1 ]	0x0 : Off
-		 *				0x1 : On 	(reference VBUCK1     reg[0x002E])
-		 *				0x2 : Sleep 	(reference VBUCK1_RET reg[0x0061])
-		 *				0x3 : On 	(reference VBUCK1_TUR reg[0x0062])
-		 *
-		 *		
-		 * ---------------------------------------------------------------	
-		 * [PC2|PC1]	11	|	10	|	01	|	00
-		 * ---------------------------------------------------------------
-		 *	[MCTL]	M3	|	M2	|	M1	|	M0
-		 * ---------------------------------------------------------------
-		 *	0xDE :	11		01		11		10	(TUR, ON , TUR, LPM)
-		 *	0xCD :	11		00		11		01	(TUR, OFF, TUR, ON )
-		 *
-		 *	0x00 :	00		00		00		00	(OFF, OFF, OFF, OFF)
-		 *	0x66 :	01		10		01		10	(ON , LPM, ON , LPM)
-		 *	0x44 :	01		00		01		00	(ON , OFF, ON , OFF)
-		 * ---------------------------------------------------------------
-		 *
-		 * NEVIS use M3 and M0
-		*/
-		D2083_MCTL_MODE_INIT(D2083_BUCK_1, 0xDE, D2083_REGULATOR_LPM_IN_DSM),	// VDD_CORE - CSR
-		D2083_MCTL_MODE_INIT(D2083_BUCK_2, 0x56, D2083_REGULATOR_MAX), // VDD_IO_1.8V / VRF_1.8V - IOSR
-		D2083_MCTL_MODE_INIT(D2083_BUCK_3, 0x56, D2083_REGULATOR_MAX), // VDD_IO_1.2V - TSR
-		D2083_MCTL_MODE_INIT(D2083_BUCK_4, 0x44, D2083_REGULATOR_MAX),	// VDD_3G_PAM_3.3V - used.
-		
-		D2083_MCTL_MODE_INIT(D2083_LDO_1,  0x00, D2083_REGULATOR_MAX),			// Not used.
-		D2083_MCTL_MODE_INIT(D2083_LDO_2,  0x56, D2083_REGULATOR_LPM_IN_DSM),	// VRF_2.7V
-		D2083_MCTL_MODE_INIT(D2083_LDO_3,  0x55, D2083_REGULATOR_LPM_IN_DSM),	// VDD_SENSOR_3.0V
-		D2083_MCTL_MODE_INIT(D2083_LDO_4,  0x44, D2083_REGULATOR_OFF_IN_DSM),	// VDD_AUD_2.9V
-		D2083_MCTL_MODE_INIT(D2083_LDO_5,  0x66, D2083_REGULATOR_LPM_IN_DSM),	// VDD_USB_3.3V
-		D2083_MCTL_MODE_INIT(D2083_LDO_6,  0x00, D2083_REGULATOR_OFF_IN_DSM),	// VCAM_A_2.8V
-		D2083_MCTL_MODE_INIT(D2083_LDO_7,  0x00, D2083_REGULATOR_OFF_IN_DSM),	// VDD_VIB_3.3V
-		D2083_MCTL_MODE_INIT(D2083_LDO_8,  0x56, D2083_REGULATOR_LPM_IN_DSM),	// VLCD_3.0V
-		D2083_MCTL_MODE_INIT(D2083_LDO_9,  0x66, D2083_REGULATOR_ON_IN_DSM),	// VDD_SDXC
-		D2083_MCTL_MODE_INIT(D2083_LDO_10, 0x00, D2083_REGULATOR_OFF_IN_DSM),	// KEY_LED_3.3V
-		D2083_MCTL_MODE_INIT(D2083_LDO_11, 0x66, D2083_REGULATOR_LPM_IN_DSM),	// VSIM1_3.0V
-		D2083_MCTL_MODE_INIT(D2083_LDO_12, 0x66, D2083_REGULATOR_LPM_IN_DSM),	// VDD_EMMC_3.0V
-		D2083_MCTL_MODE_INIT(D2083_LDO_13, 0x00, D2083_REGULATOR_LPM_IN_DSM),	// VDD_SDIO_3.0V
-		D2083_MCTL_MODE_INIT(D2083_LDO_14, 0x00, D2083_REGULATOR_OFF_IN_DSM),	// Not used
-		D2083_MCTL_MODE_INIT(D2083_LDO_15, 0x54, D2083_REGULATOR_OFF_IN_DSM),	// VTOUCH_3.3V
-		D2083_MCTL_MODE_INIT(D2083_LDO_16, 0x00, D2083_REGULATOR_OFF_IN_DSM),	// VCAM_IO_1.8V
-		D2083_MCTL_MODE_INIT(D2083_LDO_17, 0x00, D2083_REGULATOR_OFF_IN_DSM),	// VCAM_AF_2.8V
-		D2083_MCTL_MODE_INIT(D2083_LDO_AUD,0x00, D2083_REGULATOR_OFF_IN_DSM),	// Internal Audio LDO
-	},
-};
-
-#else /* CONFIG_MFD_D2083 */
 static struct bcmpmu_platform_data bcmpmu_plat_data = {
 	.i2c_pdata = { ADD_I2C_SLAVE_SPEED(BSC_BUS_SPEED_400K), },
 	.init = bcmpmu_init_platform_hw,
@@ -1552,28 +968,32 @@ static struct bcmpmu_platform_data bcmpmu_plat_data = {
 	.fg_smpl_rate = 2083,
 	.fg_slp_rate = 32000,
 	.fg_slp_curr_ua = 1220,
-	.fg_factor = 820,
+	.fg_factor = 876, // Ivory 0.3 H/W
 	.fg_sns_res = 10,
 	.batt_voltcap_map = &batt_voltcap_map[0],
 	.batt_voltcap_map_len = ARRAY_SIZE(batt_voltcap_map),
+	.cutoff_cal_map = &cutoff_cal_map[0],
+	.cutoff_cal_map_len = ARRAY_SIZE(cutoff_cal_map),
+	.eoc_cal_map = &eoc_cal_map[0],
+	.eoc_cal_map_len = ARRAY_SIZE(eoc_cal_map),
 	.batt_impedence = 140,
-	.sys_impedence = 35,
+	.sys_impedence = 35, // Brad measured 35.419 on Ivory @ 6/4/12:10
 	.chrg_1c_rate = 1300,
-	.chrg_eoc = 100,
+	.chrg_eoc = 95, // Ivory 0.3 H/W
 	.support_hw_eoc = 0,
 	.chrg_zone_map = &chrg_zone[0],
 	.fg_capacity_full = (1300) * 3600,
 	.support_fg = 1,
 	.support_chrg_maint = 1,
-	.wd_setting = &bcm59039_wd_setting,
 	.chrg_resume_lvl = 4152, /* 99% = 4160 - (4160-4122)/5 * 1*/
+	.wd_setting = &bcm59039_wd_setting,
 	.fg_support_tc = 1,
 	.fg_tc_dn_lvl = 50, /* 5c */
 	.fg_tc_up_lvl = 200, /* 20c */
 	.fg_zone_settle_tm = 60,
 	.fg_zone_info = &fg_zone[0],
 	.fg_poll_hbat = 112000,
-	.fg_poll_lbat = 1000, // SS PGM poll rate = 1sec
+	.fg_poll_lbat = 1000, /* CSP541034 SS PGM poll rate is 1 sec*/
 	.fg_lbat_lvl = 3490,  /* <= 2% */
 	.fg_fbat_lvl = 4152,  /* >= 99% */
 	.fg_low_cal_lvl = 3550,
@@ -1598,56 +1018,37 @@ static struct bcmpmu_platform_data bcmpmu_plat_data = {
 	.spalock = NULL,
 #endif
 };
-#endif	/* D2083 end */
 
-/* Add for Ricktek RT8969 */
+#ifdef CONFIG_CHARGER_BCMPMU_SPA
+static void notify_spa(enum bcmpmu_event_t event, int data)
+{
+	if (bcmpmu_plat_data.spafifo) {
+		mutex_lock(bcmpmu_plat_data.spalock);
+		if (!bcmpmu_plat_data.spafifo->fifo_full) {
+			bcmpmu_plat_data.spafifo->
+				event[bcmpmu_plat_data.spafifo->head] = event;
+			bcmpmu_plat_data.spafifo->
+				data[bcmpmu_plat_data.spafifo->head] = data;
+			bcmpmu_plat_data.spafifo->
+				head = ((bcmpmu_plat_data.spafifo->head+1)
+			 & (bcmpmu_plat_data.spafifo->length-1));
 
-#if 0 //defined(CONFIG_FSA9480_MICROUSB)	//	// TODO:
-/* VBUS_DETECT */
-struct d1980_vbus_pdata ttc_dkb_vbus = {
-	//.supply         = PM860X_GPIO2_SUPPLY_VBUS,
-	//.idpin          = PM860X_IDPIN_NO_USE,
-#if 0	// TODO
-	.reg_base       = PXA168_U2O_REGBASE,
-	.reg_end        = PXA168_U2O_REGBASE + USB_REG_RANGE,
+			if (bcmpmu_plat_data.spafifo->
+				head == bcmpmu_plat_data.spafifo->tail)
+				bcmpmu_plat_data.spafifo->fifo_full = true;
+				mutex_unlock(bcmpmu_plat_data.spalock);
+
+	if (bcmpmu_plat_data.piggyback_work)
+		schedule_delayed_work(bcmpmu_plat_data.piggyback_work, 0);
+		} else {
+			printk(KERN_INFO "%s: fifo full.\n", __func__);
+			mutex_unlock(bcmpmu_plat_data.spalock);
+		}
+	}
+}
 #endif
-};
-
-static struct fsa9480_platform_data FSA9480_info = {
-	.vbus		= &ttc_dkb_vbus
-};
-#endif
 
 
-#ifdef CONFIG_MFD_D2083
-static struct i2c_board_info __initdata pmu_info[] = {
-	{
-		I2C_BOARD_INFO("d2083", PMU_DEVICE_I2C_ADDR),
-		.platform_data = &d2083_pdata,
-		.irq = gpio_to_irq(PMU_DEVICE_INT_GPIO),
-	},
-};
-
-
-/*800 Mhz CSR voltage definitions....*/
-
-#define CSR_VAL_RETN_SS_800M		0x10 /*0.88V -> 0.90V*/
-#define CSR_VAL_RETN_TT_800M		0x10 /*0.88V -> 0.90V*/
-#define CSR_VAL_RETN_FF_800M		0x10 /*0.88V -> 0.90V*/
-
-#define CSR_VAL_ECO_SS_800M		0x18 /*1.08V -> 1.10V*/
-#define CSR_VAL_ECO_TT_800M		0x14 /*0.98V -> 1.00V*/
-#define CSR_VAL_ECO_FF_800M		0x14 /*0.98V -> 1.00V*/
-
-#define CSR_VAL_NRML_SS_800M		0x1B /*1.16V -> 1.175V*/
-#define CSR_VAL_NRML_TT_800M		0x16 /*1.04V -> 1.050V*/
-#define CSR_VAL_NRML_FF_800M		0x14 /*0.98V -> 1.00V*/
-
-#define CSR_VAL_TURBO_SS_800M		0x22 /*1.34V -> 1.350V*/
-#define B0_CSR_VAL_TURBO_SS_800M	0x21 /*1.32V -> 1.325V*/
-#define CSR_VAL_TURBO_TT_800M		0x1D /*1.22V -> 1.225V*/
-#define CSR_VAL_TURBO_FF_800M		0x19 /*1.12V -> 1.125V*/
-#else
 static struct i2c_board_info __initdata pmu_info[] = {
 	{
 		I2C_BOARD_INFO("bcmpmu", PMU_DEVICE_I2C_ADDR),
@@ -1656,123 +1057,8 @@ static struct i2c_board_info __initdata pmu_info[] = {
 	},
 };
 
-/*800 Mhz CSR voltage definitions....*/
-
-#define CSR_VAL_RETN_SS_800M	0x3 /*0.88V*/
-#define CSR_VAL_RETN_TT_800M	0x3 /*0.88V*/
-#define CSR_VAL_RETN_FF_800M	0x3 /*0.88V*/
-
-#define CSR_VAL_ECO_SS_800M		0xd /*1.08V*/
-#define CSR_VAL_ECO_TT_800M		0x8 /*0.98V*/
-#define CSR_VAL_ECO_FF_800M		0x8 /*0.98V*/
-
-#define CSR_VAL_NRML_SS_800M	0x11 /*1.16V*/
-#define CSR_VAL_NRML_TT_800M	0x0b /*1.04V*/
-#define CSR_VAL_NRML_FF_800M	0x8 /*0.98V*/
-
-#define CSR_VAL_TURBO_SS_800M		0x1A /*1.34V*/
-#define B0_CSR_VAL_TURBO_SS_800M	0x19 /*1.32V*/
-#define CSR_VAL_TURBO_TT_800M		0x14 /*1.22V*/
-#define CSR_VAL_TURBO_FF_800M		0x0F /*1.12V*/
-#endif
 
 
-
-#define PMU_CSR_VLT_TBL_SS_800M	ARRAY_LIST(\
-					CSR_VAL_RETN_SS_800M,\
-					CSR_VAL_RETN_SS_800M,\
-					CSR_VAL_RETN_SS_800M,\
-					CSR_VAL_RETN_SS_800M,\
-					CSR_VAL_RETN_SS_800M,\
-					CSR_VAL_RETN_SS_800M,\
-					CSR_VAL_RETN_SS_800M,\
-					CSR_VAL_RETN_SS_800M,\
-					CSR_VAL_ECO_SS_800M,\
-					CSR_VAL_ECO_SS_800M,\
-					CSR_VAL_ECO_SS_800M,\
-					CSR_VAL_NRML_SS_800M,\
-					CSR_VAL_NRML_SS_800M,\
-					CSR_VAL_NRML_SS_800M,\
-					CSR_VAL_TURBO_SS_800M,\
-					CSR_VAL_TURBO_SS_800M)
-
-
-#define PMU_CSR_VLT_TBL_TT_800M	ARRAY_LIST(\
-					CSR_VAL_RETN_TT_800M,\
-					CSR_VAL_RETN_TT_800M,\
-					CSR_VAL_RETN_TT_800M,\
-					CSR_VAL_RETN_TT_800M,\
-					CSR_VAL_RETN_TT_800M,\
-					CSR_VAL_RETN_TT_800M,\
-					CSR_VAL_RETN_TT_800M,\
-					CSR_VAL_RETN_TT_800M,\
-					CSR_VAL_ECO_TT_800M,\
-					CSR_VAL_ECO_TT_800M,\
-					CSR_VAL_ECO_TT_800M,\
-					CSR_VAL_NRML_TT_800M,\
-					CSR_VAL_NRML_TT_800M,\
-					CSR_VAL_NRML_TT_800M,\
-					CSR_VAL_TURBO_TT_800M,\
-					CSR_VAL_TURBO_TT_800M)
-
-#define PMU_CSR_VLT_TBL_FF_800M	ARRAY_LIST(\
-					CSR_VAL_RETN_FF_800M,\
-					CSR_VAL_RETN_FF_800M,\
-					CSR_VAL_RETN_FF_800M,\
-					CSR_VAL_RETN_FF_800M,\
-					CSR_VAL_RETN_FF_800M,\
-					CSR_VAL_RETN_FF_800M,\
-					CSR_VAL_RETN_FF_800M,\
-					CSR_VAL_RETN_FF_800M,\
-					CSR_VAL_ECO_FF_800M,\
-					CSR_VAL_ECO_FF_800M,\
-					CSR_VAL_ECO_FF_800M,\
-					CSR_VAL_NRML_FF_800M,\
-					CSR_VAL_NRML_FF_800M,\
-					CSR_VAL_NRML_FF_800M,\
-					CSR_VAL_TURBO_FF_800M,\
-					CSR_VAL_TURBO_FF_800M)
-
-#ifdef CONFIG_MFD_D2083
-/*850 Mhz CSR voltage definitions....*/
-
-#if 0	// TEST ONLY
-#define CSR_VAL_RETN_SS_850M		0x10 /*0.88V -> 0.90V*/
-#define CSR_VAL_RETN_TT_850M		0x24	// 1.4v // 0x10 /*0.88V -> 0.90V*/
-#define CSR_VAL_RETN_FF_850M		0x10 /*0.88V -> 0.90V*/
-
-#define CSR_VAL_ECO_SS_850M		0x18 /*1.08V -> 1.10V*/
-#define CSR_VAL_ECO_TT_850M		0x2C	// 1.6v	// 0x14 /*0.98V -> 1.00V*/
-#define CSR_VAL_ECO_FF_850M		0x14 /*0.98V -> 1.00V*/
-
-#define CSR_VAL_NRML_SS_850M		0x1B /*1.16V -> 1.175V*/
-#define CSR_VAL_NRML_TT_850M		0x34	// 1.8v // 0x16 /*1.04V -> 1.050V*/
-#define CSR_VAL_NRML_FF_850M		0x14 /*0.98V -> 1.00V*/
-
-#define CSR_VAL_TURBO_SS_850M		0x23 /*1.36V -> 1.375V*/
-#define B0_CSR_VAL_TURBO_SS_850M	0x21 /*1.32V -> 1.325V*/
-#define CSR_VAL_TURBO_TT_850M		0x3C	// 2.0v	//0x1E /*1.24V -> 1.250V*/
-#define CSR_VAL_TURBO_FF_850M		0x1A /*1.14V -> 1.150V*/
-#else
-#define CSR_VAL_RETN_SS_850M		0x10 /*0.88V -> 0.90V*/
-#define CSR_VAL_RETN_TT_850M		0x10 /*0.88V -> 0.90V*/
-#define CSR_VAL_RETN_FF_850M		0x10 /*0.88V -> 0.90V*/
-
-#define CSR_VAL_ECO_SS_850M		0x18 /*1.08V -> 1.10V*/
-#define CSR_VAL_ECO_TT_850M		0x14 /*0.98V -> 1.00V*/
-#define CSR_VAL_ECO_FF_850M		0x14 /*0.98V -> 1.00V*/
-
-#define CSR_VAL_NRML_SS_850M		0x1B /*1.16V -> 1.175V*/
-#define CSR_VAL_NRML_TT_850M		0x16 /*1.04V -> 1.050V*/
-#define CSR_VAL_NRML_FF_850M		0x14 /*0.98V -> 1.00V*/
-
-#define CSR_VAL_TURBO_SS_850M		0x23 /*1.36V -> 1.375V*/
-#define B0_CSR_VAL_TURBO_SS_850M	0x21 /*1.32V -> 1.325V*/
-#define CSR_VAL_TURBO_TT_850M		0x1E /*1.24V -> 1.250V*/
-#define CSR_VAL_TURBO_FF_850M		0x1A /*1.14V -> 1.150V*/
-#endif	// TEST ONLY
-
-#else
 /*850 Mhz CSR voltage definitions....*/
 
 #define CSR_VAL_RETN_SS_850M	0x3 /*0.88V*/
@@ -1783,15 +1069,14 @@ static struct i2c_board_info __initdata pmu_info[] = {
 #define CSR_VAL_ECO_TT_850M		0x8 /*0.98V*/
 #define CSR_VAL_ECO_FF_850M		0x8 /*0.98V*/
 
-#define CSR_VAL_NRML_SS_850M	0x11 /*1.16V*/
-#define CSR_VAL_NRML_TT_850M	0x0b /*1.04V*/
-#define CSR_VAL_NRML_FF_850M	0x8 /*0.98V*/
+#define CSR_VAL_NRML_SS_850M	0x10 /*1.14V*/
+#define CSR_VAL_NRML_TT_850M	0x0E /*1.10V*/
+#define CSR_VAL_NRML_FF_850M	0xA  /*1.02V*/
 
 #define CSR_VAL_TURBO_SS_850M		0x1B /*1.36V*/
-#define B0_CSR_VAL_TURBO_SS_850M	0x19 /*1.32V*/
-#define CSR_VAL_TURBO_TT_850M		0x15 /*1.24V*/
-#define CSR_VAL_TURBO_FF_850M		0x10 /*1.14V*/
-#endif
+#define CSR_VAL_TURBO_TT_850M	0x17 /*1.28V*/
+#define CSR_VAL_TURBO_FF_850M	0x11 /*1.16V*/
+
 
 
 #define PMU_CSR_VLT_TBL_SS_850M	ARRAY_LIST(\
@@ -1849,124 +1134,11 @@ static struct i2c_board_info __initdata pmu_info[] = {
 						CSR_VAL_TURBO_FF_850M,\
 						CSR_VAL_TURBO_FF_850M)
 
-#ifdef CONFIG_MFD_D2083
-/*1 Ghz CSR voltage definitions....*/
 
-#define CSR_VAL_RETN_SS_1G		0x10 /*0.88V -> 0.90V*/
-#define CSR_VAL_RETN_TT_1G		0x10 /*0.88V -> 0.90V*/
-#define CSR_VAL_RETN_FF_1G		0x10 /*0.88V -> 0.90V*/
+u8 csr_vlt_table_ss[SR_VLT_LUT_SIZE] = PMU_CSR_VLT_TBL_SS_850M;
+u8 csr_vlt_table_tt[SR_VLT_LUT_SIZE] = PMU_CSR_VLT_TBL_TT_850M;
+u8 csr_vlt_table_ff[SR_VLT_LUT_SIZE] = PMU_CSR_VLT_TBL_FF_850M;
 
-#define CSR_VAL_ECO_SS_1G		0x18 /*1.08V -> 1.10V*/
-#define CSR_VAL_ECO_TT_1G		0x14 /*0.98V -> 1.00V*/
-#define CSR_VAL_ECO_FF_1G		0x14 /*0.98V -> 1.00V*/
-
-#define CSR_VAL_NRML_SS_1G		0x1C /*0x1B 1.16V -> 1.175V -> 1.20V*/
-#define CSR_VAL_NRML_TT_1G		0x1C /*0x16 1.04V -> 1.050V -> 1.20V*/
-#define CSR_VAL_NRML_FF_1G		0x18 /*0x14 0.98V -> 1.00V -> 1.10V*/
-
-#define CSR_VAL_TURBO_SS_1G		0x23 /*1.36V -> 1.375V*/
-#define B0_CSR_VAL_TURBO_SS_1G		0x21 /*1.32V -> 1.325V*/
-#define CSR_VAL_TURBO_TT_1G		0x23 /*1.36V -> 1.375V*/
-#define B0_CSR_VAL_TURBO_TT_1G		0x21 /*1.32V -> 1.325V*/
-#define CSR_VAL_TURBO_FF_1G		0x1F /*0x1E 1.24V -> 1.25V -> 1.275V*/
-#else
-/*1 Ghz CSR voltage definitions....*/
-
-#define CSR_VAL_RETN_SS_1G	0x3 /*0.88V*/
-#define CSR_VAL_RETN_TT_1G	0x3 /*0.88V*/
-#define CSR_VAL_RETN_FF_1G	0x3 /*0.88V*/
-
-#define CSR_VAL_ECO_SS_1G	0xd /*1.08V*/
-#define CSR_VAL_ECO_TT_1G	0x8 /*0.98V*/
-#define CSR_VAL_ECO_FF_1G	0x8 /*0.98V*/
-
-#define CSR_VAL_NRML_SS_1G	0x11 /*1.16V*/
-#define CSR_VAL_NRML_TT_1G	0x0b /*1.04V*/
-#define CSR_VAL_NRML_FF_1G	0x8	/*0.98V*/
-
-#define CSR_VAL_TURBO_SS_1G		0x1B /*1.36V*/
-#define B0_CSR_VAL_TURBO_SS_1G	0x19 /*1.32V*/
-#define CSR_VAL_TURBO_TT_1G		0x1B /*1.36V*/
-#define B0_CSR_VAL_TURBO_TT_1G	0x19 /*1.32V*/
-#define CSR_VAL_TURBO_FF_1G		0x15 /*1.24V*/
-#endif
-
-
-#define PMU_CSR_VLT_TBL_SS_1G	ARRAY_LIST(\
-						CSR_VAL_RETN_SS_1G,\
-						CSR_VAL_RETN_SS_1G,\
-						CSR_VAL_RETN_SS_1G,\
-						CSR_VAL_RETN_SS_1G,\
-						CSR_VAL_RETN_SS_1G,\
-						CSR_VAL_RETN_SS_1G,\
-						CSR_VAL_RETN_SS_1G,\
-						CSR_VAL_RETN_SS_1G,\
-						CSR_VAL_ECO_SS_1G,\
-						CSR_VAL_ECO_SS_1G,\
-						CSR_VAL_ECO_SS_1G,\
-						CSR_VAL_NRML_SS_1G,\
-						CSR_VAL_NRML_SS_1G,\
-						CSR_VAL_NRML_SS_1G,\
-						CSR_VAL_TURBO_SS_1G,\
-						CSR_VAL_TURBO_SS_1G)
-
-#define PMU_CSR_VLT_TBL_TT_1G	ARRAY_LIST(\
-						CSR_VAL_RETN_TT_1G,\
-						CSR_VAL_RETN_TT_1G,\
-						CSR_VAL_RETN_TT_1G,\
-						CSR_VAL_RETN_TT_1G,\
-						CSR_VAL_RETN_TT_1G,\
-						CSR_VAL_RETN_TT_1G,\
-						CSR_VAL_RETN_TT_1G,\
-						CSR_VAL_RETN_TT_1G,\
-						CSR_VAL_ECO_TT_1G,\
-						CSR_VAL_ECO_TT_1G,\
-						CSR_VAL_ECO_TT_1G,\
-						CSR_VAL_NRML_TT_1G,\
-						CSR_VAL_NRML_TT_1G,\
-						CSR_VAL_NRML_TT_1G,\
-						CSR_VAL_TURBO_TT_1G,\
-						CSR_VAL_TURBO_TT_1G)
-
-#define PMU_CSR_VLT_TBL_FF_1G	ARRAY_LIST(\
-						CSR_VAL_RETN_FF_1G,\
-						CSR_VAL_RETN_FF_1G,\
-						CSR_VAL_RETN_FF_1G,\
-						CSR_VAL_RETN_FF_1G,\
-						CSR_VAL_RETN_FF_1G,\
-						CSR_VAL_RETN_FF_1G,\
-						CSR_VAL_RETN_FF_1G,\
-						CSR_VAL_RETN_FF_1G,\
-						CSR_VAL_ECO_FF_1G,\
-						CSR_VAL_ECO_FF_1G,\
-						CSR_VAL_ECO_FF_1G,\
-						CSR_VAL_NRML_FF_1G,\
-						CSR_VAL_NRML_FF_1G,\
-						CSR_VAL_NRML_FF_1G,\
-						CSR_VAL_TURBO_FF_1G,\
-						CSR_VAL_TURBO_FF_1G)
-
-u8 csr_vlt_table_ss[A9_FREQ_MAX][SR_VLT_LUT_SIZE] = {
-	[A9_FREQ_800_MHZ]	= PMU_CSR_VLT_TBL_SS_800M,
-	[A9_FREQ_850_MHZ]	= PMU_CSR_VLT_TBL_SS_850M,
-	[A9_FREQ_1_GHZ]		= PMU_CSR_VLT_TBL_SS_1G,
-};
-
-u8 csr_vlt_table_tt[A9_FREQ_MAX][SR_VLT_LUT_SIZE] = {
-	[A9_FREQ_800_MHZ]	= PMU_CSR_VLT_TBL_TT_800M,
-	[A9_FREQ_850_MHZ]	= PMU_CSR_VLT_TBL_TT_850M,
-	[A9_FREQ_1_GHZ]		= PMU_CSR_VLT_TBL_TT_1G,
-};
-
-u8 csr_vlt_table_ff[A9_FREQ_MAX][SR_VLT_LUT_SIZE] = {
-	[A9_FREQ_800_MHZ]	= PMU_CSR_VLT_TBL_FF_800M,
-	[A9_FREQ_850_MHZ]	= PMU_CSR_VLT_TBL_FF_850M,
-	[A9_FREQ_1_GHZ]		= PMU_CSR_VLT_TBL_FF_1G,
-};
-
-#ifdef CONFIG_MFD_D2083	
-extern void d2083_set_sType(u32 s_type);
-#endif
 
 const u8 *bcmpmu_get_sr_vlt_table(int sr, u32 freq_inx,
 						u32 silicon_type)
@@ -1975,20 +1147,19 @@ const u8 *bcmpmu_get_sr_vlt_table(int sr, u32 freq_inx,
 			"silicon_type = %d\n", __func__,
 			sr, freq_inx, silicon_type);
 
-	//BUG_ON(freq_inx != A9_FREQ_850_MHZ);
+	BUG_ON(freq_inx != A9_FREQ_850_MHZ);
 
 #ifdef CONFIG_KONA_AVS
-#ifdef CONFIG_MFD_D2083
-	d2083_set_sType(silicon_type);
-#endif
-
 	switch (silicon_type) {
 	case SILICON_TYPE_SLOW:
-  		return &csr_vlt_table_ss[freq_inx][0];
+		return csr_vlt_table_ss;
+
 	case SILICON_TYPE_TYPICAL:
-  		return &csr_vlt_table_tt[freq_inx][0];
+		return csr_vlt_table_tt;
+
 	case SILICON_TYPE_FAST:
-  		return &csr_vlt_table_ff[freq_inx][0];
+		return csr_vlt_table_ff;
+
 	default:
 		BUG();
 	}
@@ -1997,7 +1168,6 @@ const u8 *bcmpmu_get_sr_vlt_table(int sr, u32 freq_inx,
 #endif
 }
 
-#if !defined(CONFIG_MFD_D2083)
 int bcmpmu_init_platform_hw(struct bcmpmu *bcmpmu)
 {
 	int             i;
@@ -2022,35 +1192,8 @@ int bcmpmu_init_platform_hw(struct bcmpmu *bcmpmu)
 
 	return 0;
 }
-#endif	// CONFIG_MFD_D2083
 
-#ifdef CONFIG_MFD_D2083
-int d2083_init_platform_hw(void)
-{
-	printk(KERN_INFO "%s: called.\n", __func__);	
-#if 0
-	memset(&csr_vlt_table_ss[A9_FREQ_800_MHZ][SR_TURBO_INX_START],
-		B0_CSR_VAL_TURBO_SS_800M,
-		(SR_TURBO_INX_END - SR_TURBO_INX_START) + 1);
 
-	memset(&csr_vlt_table_ss[A9_FREQ_850_MHZ][SR_TURBO_INX_START],
-		B0_CSR_VAL_TURBO_SS_850M,
-		(SR_TURBO_INX_END - SR_TURBO_INX_START) + 1);
-
-	memset(&csr_vlt_table_ss[A9_FREQ_1_GHZ][SR_TURBO_INX_START],
-		B0_CSR_VAL_TURBO_SS_1G,
-		(SR_TURBO_INX_END - SR_TURBO_INX_START) + 1);
-
-	memset(&csr_vlt_table_tt[A9_FREQ_1_GHZ][SR_TURBO_INX_START],
-		B0_CSR_VAL_TURBO_TT_1G,
-		(SR_TURBO_INX_END - SR_TURBO_INX_START) + 1);
-#endif
-
-	vlt_tbl_init = 1;
-
-	return 0;
-}
-#endif
 
 __init int board_pmu_init(void)
 {
@@ -2061,13 +1204,8 @@ __init int board_pmu_init(void)
 	bcmpmu_update_pdata_dt_batt(&bcmpmu_plat_data);
 	bcmpmu_update_pdata_dt_pmu(&bcmpmu_plat_data);
 #endif
-		printk("%s  : %d\n", __FUNCTION__, __LINE__ );
-#ifdef CONFIG_MFD_D2083
-	d2083_init_platform_hw();
-	ret = gpio_request(PMU_DEVICE_INT_GPIO, "d2083-irq");
-#else
+	printk("%s  : %d\n", __FUNCTION__, __LINE__ );
 	ret = gpio_request(PMU_DEVICE_INT_GPIO, "bcmpmu-irq");
-#endif
 	if (ret < 0) {
 
 		printk(KERN_ERR "%s filed at gpio_request.\n", __func__);
@@ -2080,13 +1218,8 @@ __init int board_pmu_init(void)
 				__func__);
 		goto exit;
 	}
-	gpio_set_value(PMU_DEVICE_INT_GPIO,1);
 	irq = gpio_to_irq(PMU_DEVICE_INT_GPIO);
-#ifdef CONFIG_MFD_D2083
-	d2083_pdata.irq_base = irq;
-#else
 	bcmpmu_plat_data.irq = irq;
-#endif
 
 	i2c_register_board_info(PMU_DEVICE_I2C_BUSNO,
 				pmu_info, ARRAY_SIZE(pmu_info));
