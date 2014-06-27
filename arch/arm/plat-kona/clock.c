@@ -2915,23 +2915,24 @@ static int peri_clk_enable(struct clk *clk, int enable)
 		} while ((GET_BIT_USING_MASK(reg_val, peri_clk->stprsts_mask))
 			 && insurance < 1000);
 	}
-	if (insurance >= 1000) {
-		mach_dump_ccu_registers(clk);
-		__WARN();
-		ret = -EAGAIN;
-	}
-	clk_dbg("%s:%s clk after stprsts start\n", __func__, clk->name);
-	clk_dbg("%s, %s is %s..! \n", __func__, clk->name,
-		enable ? "enabled" : "disabled");
-
+	WARN_ON(insurance >= 1000);
 	/* disable write access */
 	ccu_write_access_enable(peri_clk->ccu_clk, false);
+	if (insurance >= 1000) {
+		clk_dbg("%s:%s Insurance failed\n",
+				__func__, clk->name);
+		return -EINVAL;
+	}
+
+	clk_dbg("%s:%s clk after stprsts start\n", __func__, clk->name);
+	clk_dbg("%s, %s is %s..!\n", __func__, clk->name,
+		enable ? "enabled" : "disabled");
 
 	clk_dbg
 	    ("*************%s: peri clock %s count after %s : %d ***************\n",
 	     __func__, clk->name, enable ? "enable" : "disable", clk->use_cnt);
 
-	return ret;
+	return 0;
 }
 
 static u32 compute_rate(u32 rate, u32 div, u32 dither, u32 max_dither,
@@ -3116,15 +3117,18 @@ static int peri_clk_set_rate(struct clk *clk, u32 rate)
 	int insurance;
 	int ret = 0;
 
-	if (clk->clk_type != CLK_TYPE_PERI)
+	if (clk->clk_type != CLK_TYPE_PERI) {
+		clk_dbg("%s : %s - Clk type is not peri\n",
+				__func__, clk->name);
 		return -EPERM;
+	}
 
 	peri_clk = to_peri_clk(clk);
 
 	clk_dbg("%s : %s\n", __func__, clk->name);
 
 	if (CLK_FLG_ENABLED(clk, RATE_FIXED)) {
-		clk_dbg("%s : %s - fixed rate clk...rate cannot be changed\n",
+		clk_dbg("%s : %s - Error...fixed rate clk\n",
 			__func__, clk->name);
 		return -EINVAL;
 
@@ -3202,10 +3206,13 @@ static int peri_clk_set_rate(struct clk *clk, u32 rate)
 		}
 		while ((GET_BIT_USING_MASK(reg_val, clk_div->div_trig_mask))
 		       && insurance < 1000);
+		WARN_ON(insurance >= 1000);
 		if (insurance >= 1000) {
-			mach_dump_ccu_registers(clk);
-			__WARN();
-			ret = -EAGAIN;
+			ccu_write_access_enable(peri_clk->ccu_clk, false);
+			clk_dbg("%s : %s - Insurance failed\n", __func__,
+					clk->name);
+			__peri_clk_disable(clk);
+			return -EINVAL;
 		}
 	}
 	if (clk_div->prediv_trig_offset && clk_div->prediv_trig_mask) {
@@ -3234,10 +3241,13 @@ static int peri_clk_set_rate(struct clk *clk, u32 rate)
 		}
 		while ((GET_BIT_USING_MASK(reg_val, clk_div->prediv_trig_mask))
 		       && insurance < 1000);
+		WARN_ON(insurance >= 1000);
 		if (insurance >= 1000) {
-			mach_dump_ccu_registers(clk);
-			__WARN();
-			ret = -EAGAIN;
+			ccu_write_access_enable(peri_clk->ccu_clk, false);
+			clk_dbg("%s : %s - Insurance failed\n", __func__,
+					clk->name);
+			__peri_clk_disable(clk);
+			return -EINVAL;
 		}
 	}
 	/* disable write access */
@@ -3246,7 +3256,7 @@ static int peri_clk_set_rate(struct clk *clk, u32 rate)
 	__peri_clk_disable(clk);
 
 	clk_dbg("clock set rate done \n");
-	return ret;
+	return 0;
 }
 
 static int peri_clk_init(struct clk *clk)
@@ -3660,23 +3670,23 @@ static int bus_clk_enable(struct clk *clk, int enable)
 		} while ((GET_BIT_USING_MASK(reg_val, bus_clk->stprsts_mask))
 			 && insurance < 1000);
 	}
-	if( insurance >= 1000 ) {
-		mach_dump_ccu_registers(clk);
-		__WARN();
-			ret = -EAGAIN;
-		}
-	
-	
+	WARN_ON(insurance >= 1000);
+
+	/* disable write access */
+	ccu_write_access_enable(bus_clk->ccu_clk, false);
+	if (insurance >= 1000) {
+		clk_dbg("%s:%s Insurance failed\n", __func__, clk->name);
+		return -EINVAL;
+	}
+
 	clk_dbg("%s:%s clk after stprsts start\n", __func__, clk->name);
 	clk_dbg("%s -- %s is %s\n", __func__, clk->name,
 		enable ? "enabled" : "disabled");
-	/* disable write access */
-	ccu_write_access_enable(bus_clk->ccu_clk, false);
 
 	clk_dbg
 	    ("*************%s: bus clock %s count after %s : %d ***************\n",
 	     __func__, clk->name, enable ? "enable" : "disable", clk->use_cnt);
-	return ret;
+	return 0;
 }
 
 static unsigned long bus_clk_get_rate(struct clk *c)
@@ -4142,15 +4152,18 @@ static int pll_clk_set_rate(struct clk *clk, u32 rate)
 	u32 ndiv_int, nfrac, pdiv;
 	int inx, ret = 0;
 	struct pll_cfg_ctrl_info *cfg_ctrl;
-	if (clk->clk_type != CLK_TYPE_PLL)
+	if (clk->clk_type != CLK_TYPE_PLL) {
+		clk_dbg("%s : %s Clock type is not PLL\n",
+				__func__, clk->name);
 		return -EPERM;
+	}
 
 	pll_clk = to_pll_clk(clk);
 
 	clk_dbg("%s : %s\n", __func__, clk->name);
 
 	if (CLK_FLG_ENABLED(clk, RATE_FIXED)) {
-		clk_dbg("%s : %s - fixed rate clk...rate cannot be changed\n",
+		clk_dbg("%s : %s - Error...fixed rate clk\n",
 			__func__, clk->name);
 		return -EINVAL;
 
@@ -4229,18 +4242,19 @@ static int pll_clk_set_rate(struct clk *clk, u32 rate)
 			insurance++;
 		} while (!(GET_BIT_USING_MASK(reg_val, pll_clk->pll_lock))
 			 && insurance < 1000);
+		WARN_ON(insurance >= 1000);
 		if (insurance >= 1000) {
-			mach_dump_ccu_registers(clk);
-			__WARN();
-			ret = -EAGAIN;
+			ccu_write_access_enable(pll_clk->ccu_clk, false);
+			clk_dbg("%s : %s - Insurance failed\n",
+					__func__, clk->name);
+			return -EINVAL;
 		}
 	}
 
 	/* disable write access */
 	ccu_write_access_enable(pll_clk->ccu_clk, false);
-
-	clk_dbg("clock set rate done \n");
-	return ret;
+	clk_dbg("clock set rate done\n");
+	return 0;
 }
 
 static int pll_clk_enable(struct clk *clk, int enable)
@@ -4272,8 +4286,12 @@ static int pll_clk_enable(struct clk *clk, int enable)
 			__func__, reg_val);
 		/*Return if sw_override bit is set */
 		if (GET_BIT_USING_MASK
-		    (reg_val, pll_clk->idle_pwrdwn_sw_ovrride_mask))
-			goto auto_gated;
+		    (reg_val, pll_clk->idle_pwrdwn_sw_ovrride_mask)) {
+			clk_dbg("%s : %s - Software override\n", __func__,
+					clk->name);
+			ccu_write_access_enable(pll_clk->ccu_clk, false);
+			return 0;
+		}
 	}
 	if (enable) {
 		reg_val =
@@ -4325,17 +4343,18 @@ static int pll_clk_enable(struct clk *clk, int enable)
 			insurance++;
 		} while (!(GET_BIT_USING_MASK(reg_val, pll_clk->pll_lock))
 			 && insurance < 1000);
+		WARN_ON(insurance >= 1000);
 		if (insurance >= 1000) {
-			mach_dump_ccu_registers(clk);
-			__WARN();
-			ret = -EAGAIN;
+			ccu_write_access_enable(pll_clk->ccu_clk, false);
+			clk_dbg("%s : %s - Insurance failed\n", __func__,
+					clk->name);
+			return -EINVAL;
 		}
 
 	}
 
-	clk_dbg("%s, %s is %s..! \n", __func__, clk->name,
+	clk_dbg("%s, %s is %s..!\n", __func__, clk->name,
 		enable ? "enabled" : "disabled");
-auto_gated:
 	/* disable write access */
 	ccu_write_access_enable(pll_clk->ccu_clk, false);
 
@@ -4343,7 +4362,7 @@ auto_gated:
 	    ("*************%s: pll clock %s count after %s : %d ***************\n",
 	     __func__, clk->name, enable ? "enable" : "disable", clk->use_cnt);
 
-	return ret;
+	return 0;
 }
 
 static int pll_clk_init(struct clk *clk)

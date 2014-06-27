@@ -61,7 +61,7 @@
         0x00000043   /* 0x3500_48AC: GPIO28: GPIO28: 0 = TTL input: 1 = pull-down enabled: 0 = pull-up disabled: 0 = unslewed output: 0 = Input Enabled: 011: 8mA */
         0x00000023   /* 0x3500_48B0: GPIO32: GPIO32: 0 = TTL input: 0 = pull-down disabled: 1 = pull-up enabled: 0 = unslewed output: 0 = Input Enabled: 011: 8mA */
         0x00000043   /* 0x3500_48B4: GPIO33: GPIO33: 0 = TTL input: 1 = pull-down enabled: 0 = pull-up disabled: 0 = unslewed output: 0 = Input Enabled: 011: 8mA */
-        0x00000003   /* 0x3500_48B8: GPIO34: GPIO34: 0 = TTL input: 0 = pull-down disabled: 0 = pull-up disabled: 0 = unslewed output: 0 = Input Enabled: 011: 8mA */ 
+        0x00000043   /* 0x3500_48B8: GPIO34: GPIO34: 0 = TTL input: 1 = pull-down enabled: 0 = pull-up disabled: 0 = unslewed output: 0 = Input Enabled: 011: 8mA */
         0x00000443   /* 0x3500_48BC: GPS_CALREQ: GPIO99: 0 = TTL input: 1 = pull-down enabled: 0 = pull-up disabled: 0 = unslewed output: 0 = Input Enabled: 011: 8mA */
         0x00000443   /* 0x3500_48C0: GPS_HOSTREQ: GPIO100: 0 = TTL input: 1 = pull-down enabled: 0 = pull-up disabled: 0 = unslewed output: 0 = Input Enabled: 011: 8mA */
         0x00000443   /* 0x3500_48C4: GPS_PABLANK: GPIO97: 0 = TTL input: 1 = pull-down enabled: 0 = pull-up disabled: 0 = unslewed output: 0 = Input Enabled: 011: 8mA */

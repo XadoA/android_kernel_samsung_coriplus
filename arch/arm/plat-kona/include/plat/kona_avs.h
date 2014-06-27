@@ -33,6 +33,19 @@ enum {
 	AVS_ATE_FEATURE_ENABLE = 1 << 4,
 };
 
+enum {
+	FAB_TSMC,
+	FAB_SMIC
+};
+
+enum {
+	A9_FREQ_700_MHZ,
+	A9_FREQ_800_MHZ,
+	A9_FREQ_850_MHZ,
+	A9_FREQ_1_GHZ,
+	A9_FREQ_MAX
+};
+
 struct kona_ate_lut_entry {
 	int freq;
 	int silicon_type;
@@ -44,8 +57,8 @@ struct kona_avs_pdata {
 	u32 avs_ate_addr;
 	int ate_default_silicon_type; /* default silicon type when CRC fails */
 
-	void (*silicon_type_notify) (u32 silicon_type, int freq_id);
-
+	void (*silicon_type_notify) (u32 *silicon_type, int *freq_id);
+	u32 (*vm_bin_smic_lut)[VM_BIN_LUT_SIZE];
 	u32 (*vm_bin_B0_lut)[VM_BIN_LUT_SIZE];
 	u32 (*vm_bin_B1_lut)[VM_BIN_LUT_SIZE];
 	u32 *silicon_type_lut;
@@ -53,6 +66,7 @@ struct kona_avs_pdata {
 	struct kona_ate_lut_entry *ate_lut;
 };
 
-u32 kona_avs_get_solicon_type(void);
+u32 kona_avs_get_silicon_type(void);
+u32 kona_avs_get_fab_src(void);
 
 #endif	  /*__KONA_AVS___*/

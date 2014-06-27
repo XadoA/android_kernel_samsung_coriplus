@@ -30,7 +30,11 @@
 #include <mach/io_map.h>
 #include <mach/rdb/brcm_rdb_uartb.h>
 
+#if defined( CONFIG_RHEA_UART_HYBRID )
+#define KONA_UART0_PA UARTB2_BASE_ADDR
+#else
 #define KONA_UART0_PA UARTB_BASE_ADDR
+#endif
 
 static inline void putc(int c)
 {

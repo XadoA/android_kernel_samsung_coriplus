@@ -591,8 +591,6 @@ static void *__dma_alloc(struct device *dev, size_t size, dma_addr_t *handle,
 
 	if (addr)
 		*handle = pfn_to_dma(dev, page_to_pfn(page));
-	else
-		__dma_free_buffer(page, size);
 
 	return addr;
 }

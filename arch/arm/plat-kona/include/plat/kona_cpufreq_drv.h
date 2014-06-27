@@ -15,8 +15,9 @@
 
 #ifndef KONA_CPUFREQ_DRV_H
 #define KONA_CPUFREQ_DRV_H
+#include <linux/plist.h>
 
-struct kona_freq_tbl {
+struct kona_freq_tbl{
 	u32 cpu_freq;		/* in MHz */
 	int opp;		/* Operating point eg: ECONOMY, NORMAL, TURBO */
 };
@@ -54,8 +55,28 @@ struct kona_cpufreq_drv_pdata {
 	void (*cpufreq_init) (void);
 };
 
+enum {
+	FREQ_LMT_NODE_ADD,
+	FREQ_LMT_NODE_DEL,
+	FREQ_LMT_NODE_UPDATE,
+};
+
+struct cpufreq_lmt_node {
+	char *name;
+	struct plist_node node;
+	int lmt;
+	int lmt_typ;
+	bool valid;
+};
+
+int cpufreq_add_lmt_req(struct cpufreq_lmt_node *lmt_node,
+	char *client_name, int lmt, int lmt_typ);
+int cpufreq_del_lmt_req(struct cpufreq_lmt_node *lmt_node);
+int cpufreq_update_lmt_req(struct cpufreq_lmt_node *lmt_node,
+	int lmt);
+
 int get_cpufreq_limit(unsigned int *val, int limit_type);
-int set_cpufreq_limit(unsigned int val, int limit_type);
+int set_cpufreq_limit(int val, int limit_type);
 u32 get_cpu_freq_from_opp(int opp);
 
 #endif /* BCM_CPUFREQ_DRV_H */

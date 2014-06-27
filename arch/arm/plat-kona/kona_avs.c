@@ -23,8 +23,6 @@
 #include <linux/io.h>
 #include <plat/cpu.h>
 
-/*#define KONA_AVS_DEBUG*/
-
 /*Should we move this to avs_param ?? */
 #define VM_VAL_MASK	(0xFF)
 #define VM0_VAL_SHIFT	(8)
@@ -36,11 +34,13 @@
 #define AVS_ATE_YEAR_MASK	(0xF0)
 #define AVS_ATE_VAL_MASK	(0xF00)
 #define AVS_ATE_CRC_MASK	(0xF000)
+#define AVS_ATE_FAB_SRC_MASK    (0x30000)
 
 #define AVS_ATE_MONTH_SHIFT	(0)
 #define AVS_ATE_YEAR_SHIFT	(4)
 #define AVS_ATE_VAL_SHIFT	(8)
 #define AVS_ATE_CRC_SHIFT	(12)
+#define AVS_ATE_FAB_SRC_SHIFT   (16)
 
 #define AVS_ATE_YEAR_2012	(2)
 #define AVS_ATE_MONTH_JUNE	(6)
@@ -68,7 +68,7 @@ struct avs_info {
 	u32 vm_silicon_type;
 
 	u32 silicon_type;
-
+	u32 fab_src;
 	u32 ate_silicon_type;
 	u32 freq;
 	u32 avs_ate_val;
@@ -98,9 +98,15 @@ module_param_named(month, avs_info.month, int, S_IRUGO | S_IWUSR
 			| S_IWGRP);
 module_param_named(ate_crc, avs_info.ate_crc, int, S_IRUGO | S_IWUSR
 			| S_IWGRP);
-
 module_param_named(debug_mask, debug_mask, int, S_IRUGO | S_IWUSR |
 		S_IWGRP);
+module_param_named(fab_src, avs_info.fab_src, int, S_IRUGO | S_IWUSR
+			| S_IWGRP);
+
+u32 kona_avs_get_fab_src(void)
+{
+	return avs_info.fab_src;
+}
 
 struct trigger_avs {
 	int dummy;
@@ -133,28 +139,12 @@ struct ate_val {
 	u32 reserved;
 };
 
-#if defined(KONA_AVS_DEBUG)
-
-static int otp_read(int row, struct vm_val *vm_val)
-{
-	avs_dbg(AVS_LOG_INFO, "%s:row = %d\n", __func__, row);
-	if (row < 0)
-		return -EINVAL;
-	vm_val->val0 =
-	    (146 << VM0_VAL_SHIFT) | (180 << VM1_VAL_SHIFT) |
-			(95 << VM2_VAL_SHIFT);
-	vm_val->val1 = 170;
-
-	return 0;
-}
-#endif
-
-u32 kona_avs_get_solicon_type(void)
+u32 kona_avs_get_silicon_type(void)
 {
 	BUG_ON(avs_info.pdata == NULL);
 	return avs_info.silicon_type;
 }
-EXPORT_SYMBOL(kona_avs_get_solicon_type);
+EXPORT_SYMBOL(kona_avs_get_silicon_type);
 
 /**
  * converts interger to string radix 2 (binary
@@ -263,9 +253,6 @@ static int avs_read_vm_otp(struct avs_info *avs_inf_ptr)
 				"%s: AVS_READ_FROM_OTP => row = %x\n",
 				__func__,
 				avs_inf_ptr->pdata->avs_mon_addr);
-#if defined(KONA_AVS_DEBUG) || defined(CONFIG_KONA_OTP)
-		ret = otp_read(avs_inf_ptr->pdata->avs_mon_addr, &vm_val);
-#endif
 	}
 
 	if (!ret) {
@@ -334,6 +321,12 @@ static int avs_read_ate_otp(struct avs_info *avs_inf_ptr)
 				AVS_ATE_YEAR_SHIFT);
 		avs_inf_ptr->month = ((ate_val.val0 & AVS_ATE_MONTH_MASK) >>
 				AVS_ATE_MONTH_SHIFT);
+		avs_inf_ptr->fab_src = ((ate_val.val0 & AVS_ATE_FAB_SRC_MASK)
+				>> AVS_ATE_FAB_SRC_SHIFT);
+		if (avs_inf_ptr->fab_src == 0)
+			avs_inf_ptr->fab_src = FAB_TSMC;
+		else
+			avs_inf_ptr->fab_src = FAB_SMIC;
 		/**
 		 * if year and month field is 0, we will assume June 2012
 		 * This is just for debug print purpose only
@@ -451,14 +444,19 @@ static u32 avs_vm_get_silicon_type(struct avs_info *avs_inf_ptr,
 	u32 type_vm0, type_vm1, type_vm2, type_vm3;
 	u32 silicon_type;
 
-	if (chip_rev_id == RHEA_CHIP_REV_B0)
-		lut = pdata->vm_bin_B0_lut;
-	else if (chip_rev_id == RHEA_CHIP_REV_B1)
-		lut = pdata->vm_bin_B1_lut;
-	else {
-		WARN_ON(1);
-		return SILICON_TYPE_SLOW;
-	}
+	if (avs_inf_ptr->fab_src == FAB_SMIC)
+		lut = pdata->vm_bin_smic_lut;
+	else if (avs_inf_ptr->fab_src == FAB_TSMC) {
+		if (chip_rev_id == RHEA_CHIP_REV_B0)
+			lut = pdata->vm_bin_B0_lut;
+		else if (chip_rev_id == RHEA_CHIP_REV_B1)
+			lut = pdata->vm_bin_B1_lut;
+		else {
+			WARN_ON(1);
+			return SILICON_TYPE_SLOW;
+		}
+	} else
+		BUG();
 
 	type_vm0 = avs_vm_find_silicon_type(avs_inf_ptr,
 			avs_inf_ptr->vm0_val,
@@ -503,10 +501,15 @@ static int avs_find_silicon_type(void)
 		 */
 		avs_info.silicon_type = avs_vm_get_silicon_type(&avs_info,
 				RHEA_CHIP_REV_B0);
-		if (avs_info.silicon_type == SILICON_TYPE_FAST)
+		if (avs_info.silicon_type == SILICON_TYPE_FAST) {
 			avs_info.silicon_type = SILICON_TYPE_TYPICAL;
-		else
+			avs_info.ate_silicon_type = SILICON_TYPE_TYPICAL;
+			avs_info.vm_silicon_type = SILICON_TYPE_TYPICAL;
+		} else {
 			avs_info.silicon_type = SILICON_TYPE_SLOW;
+			avs_info.vm_silicon_type = SILICON_TYPE_SLOW;
+			avs_info.ate_silicon_type = SILICON_TYPE_SLOW;
+		}
 		avs_info.freq = -1;
 	} else if (ate_enabled && !ret && (avs_info.freq != -1)) {
 		/**
@@ -525,6 +528,17 @@ static int avs_find_silicon_type(void)
 					&avs_info,
 					RHEA_CHIP_REV_B1);
 		}
+		/* If freq is 1Ghz, the silicon type will be either typical
+		   or fast. Therefore even if vm type is SLOW, we will
+		   consider it as silicon type TYPICAL */
+
+		if (avs_info.freq == A9_FREQ_1_GHZ &&
+			avs_info.vm_silicon_type == SILICON_TYPE_SLOW) {
+			avs_info.silicon_type = SILICON_TYPE_TYPICAL;
+			avs_dbg(AVS_LOG_INIT, "ATE says freq is 1GHZ and VM"\
+				"Table says the silicon type is slow."\
+				"Mismatch.Setting it to type = TYPICAL");
+		} else
 		avs_info.silicon_type = min(avs_info.ate_silicon_type,
 					avs_info.vm_silicon_type);
 	} else {
@@ -538,8 +552,8 @@ static int avs_find_silicon_type(void)
 	}
 
 	if (avs_info.pdata->silicon_type_notify)
-		avs_info.pdata->silicon_type_notify(avs_info.silicon_type,
-				avs_info.freq);
+		avs_info.pdata->silicon_type_notify(&avs_info.silicon_type,
+				&avs_info.freq);
 
 	avs_dbg(AVS_LOG_INIT,
 			"%s: silicon type vm: %d  ate: %d"
@@ -601,6 +615,8 @@ static int kona_avs_drv_probe(struct platform_device *pdev)
 		goto error;
 
 	avs_find_silicon_type();
+	avs_dbg(AVS_LOG_INIT, "The fab is made in %s foundry\n",
+			avs_info.fab_src ? "SMIC" : "TSMC");
 
 error:
 	return ret;

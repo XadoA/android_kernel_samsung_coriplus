@@ -1316,6 +1316,7 @@ static int _setup_req(unsigned dry_run, struct pl330_thread *thrd,
 {
 	struct _pl330_req *req = &thrd->req[index];
 	struct pl330_xfer *x;
+	struct pl330_config *pcfg = pxs->r->cfg->pcfg;
 	u8 *buf = req->mc_cpu;
 	int off = 0;
 
@@ -1346,7 +1347,17 @@ static int _setup_req(unsigned dry_run, struct pl330_thread *thrd,
 
 	/* DMASEV peripheral/event */
 	off += _emit_SEV(dry_run, &buf[off], thrd->ev);
+
+	/*
+	 * PL330 rev r0p0 needs to clear the reservation counter
+	 * before executing the end instruction.
+	 * This workaround is not nedded for DMAC rev >= r1p0
+	 */
+	if (get_revision_id(pcfg->periph_id) < PERIPH_REV_R1P0)
+		off += _emit_MOV(dry_run, &buf[off], DAR, 0x00);
+
 	/* DMAEND */
+
 	off += _emit_END(dry_run, &buf[off]);
 
 	return off;
@@ -1376,8 +1387,8 @@ static inline u32 _prepare_ccr(const struct pl330_reqcfg *rqc)
 	ccr |= (rqc->brst_size << CC_SRCBRSTSIZE_SHFT);
 	ccr |= (rqc->brst_size << CC_DSTBRSTSIZE_SHFT);
 
-	ccr |= (rqc->dcctl << CC_SRCCCTRL_SHFT);
-	ccr |= (rqc->scctl << CC_DSTCCTRL_SHFT);
+	ccr |= (rqc->dcctl << CC_DSTCCTRL_SHFT);
+	ccr |= (rqc->scctl << CC_SRCCCTRL_SHFT);
 
 	ccr |= (rqc->swap << CC_SWAP_SHFT);
 
